@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Offer Importer 0.92.01.06.26</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172023;
+      --muted: #5d686d;
+      --line: #c9d3d7;
+      --panel: #f6f8f9;
+      --teal: #2f5d62;
+      --teal-dark: #23474b;
+      --gold: #fff2cc;
+      --blue: #ddebf7;
+      --danger: #9a2d25;
+      --success: #227245;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+    }
+
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 32px 24px 48px;
+    }
+
+    .brand-header {
+      display: grid;
+      grid-template-columns: minmax(180px, 360px) 1fr;
+      align-items: center;
+      gap: 24px;
+      margin: 0 0 24px;
+      padding: 18px 20px;
+      background: var(--teal);
+    }
+
+    .brand-logo {
+      display: block;
+      width: 100%;
+      max-width: 320px;
+      height: auto;
+      background: #fff;
+      padding: 10px 14px;
+    }
+
+    h1 {
+      margin: 0;
+      color: #fff;
+      font-size: 28px;
+      line-height: 1.15;
+      text-align: right;
+    }
+
+    .version {
+      display: block;
+      margin-top: 6px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 220px minmax(220px, 1fr) 220px;
+      min-height: 68px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .label {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      background: var(--blue);
+      font-weight: 700;
+    }
+
+    .value {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      padding: 14px 16px;
+      background: var(--gold);
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .action {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      max-width: 190px;
+    }
+
+    .run-band {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 18px;
+      margin-top: 28px;
+      padding: 18px 20px;
+      background: var(--teal);
+      color: #fff;
+    }
+
+    button {
+      min-width: 190px;
+      min-height: 52px;
+      border: 0;
+      background: #138a47;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #97a3a6;
+      cursor: not-allowed;
+    }
+
+    #status {
+      margin-top: 18px;
+      min-height: 54px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    #status[data-type="busy"] {
+      border-color: var(--teal);
+      color: var(--teal-dark);
+    }
+
+    #status[data-type="success"] {
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    #status[data-type="error"] {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .notes {
+      margin-top: 24px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    footer {
+      margin-top: 34px;
+      padding: 18px 20px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    footer a {
+      color: var(--teal-dark);
+      font-weight: 700;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        padding: 20px 14px 36px;
+      }
+
+      .brand-header {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        text-align: left;
+      }
+
+      .row,
+      .run-band {
+        grid-template-columns: 1fr;
+      }
+
+      .action {
+        justify-content: start;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="brand-header">
+      <img class="brand-logo" src="./secret-escapes-logo.jpg" alt="Secret Escapes">
+      <h1>Offer Importer <span class="version">0.92.01.06.26</span></h1>
+    </header>
+
+    <section class="grid" aria-label="File selection">
+      <div class="row">
+        <div class="label">Template file</div>
+        <div class="value" id="template-name">No template selected</div>
+        <div class="action">
+          <input id="template-file" type="file" accept=".xlsx,.xlsm">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="label">Source workbook</div>
+        <div class="value" id="offer-name">No source workbook selected</div>
+        <div class="action">
+          <input id="offer-file" type="file" accept=".xlsx,.xlsm,.xls">
+        </div>
+      </div>
+    </section>
+
+    <section class="run-band" aria-label="Generate workbook">
+      <div>
+        Creates a separate Excel file for each populated Rates and Allocation pair, then downloads all files directly.
+      </div>
+      <button id="generate" type="button" disabled>Generate Excel</button>
+    </section>
+
+    <div id="status" role="status" aria-live="polite">Ready.</div>
+
+    <div class="notes">
+      Use the normal Shared Template file as the template input. Use either a submission offer form, rate-update workbook, or paired Rates/Allocation workbook as the source workbook.
+      If your browser asks, allow multiple downloads. The generated workbooks are new files; your original files are not changed.
+    </div>
+
+    <footer>
+      <div>© Copyright 2026 Secret Escapes</div>
+      <div>
+        Created by
+        <a href="mailto:b.gheorghe@secretescapes.com">Bogdan Gheorghe</a>
+      </div>
+    </footer>
+  </main>
+
+  <script src="./offer-importer.bundle.js"></script>
+</body>
+</html>
