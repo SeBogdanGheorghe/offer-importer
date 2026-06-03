@@ -1,6 +1,6 @@
 # Offer Importer
 
-Version: 0.93.02.06.26
+Version: 0.94.03.06.26
 
 Browser-based Excel importer for creating separate upload-template workbooks from Secret Escapes offer forms, rate-update workbooks, and paired Rates/Allocation tabs.
 
@@ -18,6 +18,7 @@ All Excel processing runs locally in the browser. The selected Excel files are n
 ## Supported Source Workbooks
 
 - Submission offer forms.
+- Older no-flight submission forms with `Departure Date` rates/allocation tabs.
 - German offer forms with fields like `PRO ZIMMER Angebotsrate`, `Reise-Startdatum`, and `SHARED Allocation`.
 - Rate-update workbooks with sheets like `Rates (1)` / `Allocation (1)` or `5 Nts Departures` / `5 Nts Summary`.
 - `.xls`, `.xlsx`, and `.xlsm` workbooks with paired Rates and Allocation tabs, such as `Superior rates sheet` / `Superior alloc.tab`.
