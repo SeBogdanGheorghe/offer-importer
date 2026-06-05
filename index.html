@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Offer Importer 0.96.05.06.26</title>
+  <title>Offer Importer 0.97.05.06.26</title>
   <style>
     :root {
       color-scheme: light;
@@ -53,6 +53,13 @@
       margin: 0 0 22px;
     }
 
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      min-width: 0;
+    }
+
     .brand-logo {
       display: block;
       width: auto;
@@ -73,7 +80,6 @@
       display: inline-flex;
       align-items: center;
       min-height: 34px;
-      margin-left: 10px;
       padding: 0 12px;
       border: 1px solid var(--line);
       border-radius: 999px;
@@ -83,7 +89,6 @@
       font-family: "Source Sans Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
       font-size: 0.9rem;
       font-weight: 800;
-      vertical-align: middle;
       white-space: nowrap;
     }
 
@@ -110,7 +115,7 @@
       grid-template-columns: 1fr auto;
       align-items: center;
       gap: 16px;
-      margin-bottom: 18px;
+      margin-top: 18px;
       padding: 16px;
       border-radius: 8px;
       background: var(--brand);
@@ -368,10 +373,10 @@
         flex-direction: column;
       }
 
-      .version {
-        display: flex;
-        width: fit-content;
-        margin: 10px 0 0;
+      .brand-lockup {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
       }
 
       .command-band,
@@ -398,22 +403,15 @@
 <body>
   <main>
     <header class="brand-header">
-      <div>
+      <div class="brand-lockup">
         <img class="brand-logo" src="./secret-escapes-logo.jpg" alt="Secret Escapes">
+        <div>
+          <div class="eyebrow"><span></span>Excel upload tool</div>
+          <h1>Offer Importer</h1>
+        </div>
       </div>
-      <div>
-        <div class="eyebrow"><span></span>Excel upload tool</div>
-        <h1>Offer Importer <span class="version">0.96.05.06.26</span></h1>
-      </div>
+      <span class="version">0.97.05.06.26</span>
     </header>
-
-    <section class="command-band" aria-label="Generate workbook">
-      <div>
-        <strong>Generate upload workbooks</strong>
-        <span>Creates a separate Excel file for each populated Rates and Allocation pair, then downloads all files directly.</span>
-      </div>
-      <button id="generate" type="button" disabled>Generate Excel</button>
-    </section>
 
     <section class="workspace" aria-label="File selection">
       <div class="workspace-header">
@@ -445,6 +443,14 @@
           </div>
         </div>
       </div>
+    </section>
+
+    <section class="command-band" aria-label="Generate workbook">
+      <div>
+        <strong>Generate upload workbooks</strong>
+        <span>Creates a separate Excel file for each populated Rates and Allocation pair, then downloads all files directly.</span>
+      </div>
+      <button id="generate" type="button" disabled>Generate Excel</button>
     </section>
 
     <div id="status" role="status" aria-live="polite">Ready.</div>
