@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Offer Importer 0.97.05.06.26</title>
+  <title>Offer Importer 0.96.05.06.26</title>
   <style>
     :root {
       color-scheme: light;
@@ -54,16 +54,15 @@
     }
 
     .brand-lockup {
-      display: flex;
-      align-items: center;
-      gap: 18px;
+      display: grid;
+      gap: 8px;
       min-width: 0;
     }
 
-    .brand-logo {
+    .se-brand-logo {
       display: block;
-      width: auto;
-      max-width: 240px;
+      width: 164px;
+      max-width: 100%;
       height: auto;
     }
 
@@ -90,24 +89,6 @@
       font-size: 0.9rem;
       font-weight: 800;
       white-space: nowrap;
-    }
-
-    .eyebrow {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      margin-bottom: 8px;
-      color: var(--muted);
-      font-size: 0.82rem;
-      font-weight: 800;
-      text-transform: uppercase;
-    }
-
-    .eyebrow span {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: var(--teal-dark);
     }
 
     .command-band {
@@ -374,8 +355,6 @@
       }
 
       .brand-lockup {
-        align-items: flex-start;
-        flex-direction: column;
         gap: 12px;
       }
 
@@ -404,13 +383,10 @@
   <main>
     <header class="brand-header">
       <div class="brand-lockup">
-        <img class="brand-logo" src="./secret-escapes-logo.jpg" alt="Secret Escapes">
-        <div>
-          <div class="eyebrow"><span></span>Excel upload tool</div>
-          <h1>Offer Importer</h1>
-        </div>
+        <img class="se-brand-logo" src="./se-logo-black.svg" alt="Secret Escapes">
+        <h1>Offer Importer</h1>
       </div>
-      <span class="version">0.97.05.06.26</span>
+      <span class="version">0.96.05.06.26</span>
     </header>
 
     <section class="workspace" aria-label="File selection">
