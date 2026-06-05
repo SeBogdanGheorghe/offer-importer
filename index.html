@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Offer Importer 0.97.05.06.26</title>
+  <title>Offer Importer 0.98.05.06.26</title>
   <style>
     :root {
       color-scheme: light;
@@ -434,6 +434,40 @@
       font-weight: 800;
     }
 
+    .changes {
+      margin-top: 18px;
+      padding: 14px 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 10px 24px rgb(16 24 40 / 6%);
+    }
+
+    .changes h2 {
+      font-family: "Source Sans Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+
+    .changes ul {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px 18px;
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .changes strong {
+      color: var(--ink);
+    }
+
+    :root[data-theme="dark"] .changes {
+      box-shadow: 0 10px 24px rgb(0 0 0 / 30%);
+    }
+
     footer {
       margin-top: 28px;
       color: var(--muted);
@@ -469,7 +503,8 @@
 
       .command-band,
       .row,
-      .notes {
+      .notes,
+      .changes ul {
         grid-template-columns: 1fr;
       }
 
@@ -513,7 +548,7 @@
             <path d="m19.07 4.93-1.41 1.41"></path>
           </svg>
         </button>
-        <span class="version">0.97.05.06.26</span>
+        <span class="version">0.98.05.06.26</span>
       </div>
     </header>
 
@@ -573,6 +608,16 @@
         If your browser asks, allow multiple downloads. Your original files are not changed.
       </article>
     </div>
+
+    <section class="changes" aria-label="Recent changes since version 0.94">
+      <h2>Recent Changes Since 0.94</h2>
+      <ul>
+        <li><strong>0.95</strong> More file/form support.</li>
+        <li><strong>0.96</strong> New SE layout and logo.</li>
+        <li><strong>0.97</strong> Dark mode added.</li>
+        <li><strong>0.98</strong> Short change list added.</li>
+      </ul>
+    </section>
 
     <footer>
       <div>© Copyright 2026 Secret Escapes</div>
