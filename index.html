@@ -3,20 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Offer Importer 0.95.05.06.26</title>
+  <title>Offer Importer 0.96.05.06.26</title>
   <style>
     :root {
       color-scheme: light;
-      --ink: #172023;
-      --muted: #5d686d;
-      --line: #c9d3d7;
-      --panel: #f6f8f9;
-      --teal: #2f5d62;
-      --teal-dark: #23474b;
-      --gold: #fff2cc;
-      --blue: #ddebf7;
-      --danger: #9a2d25;
-      --success: #227245;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #d8dee8;
+      --line-soft: #e4e7ec;
+      --page: #f4f6f8;
+      --surface: #ffffff;
+      --surface-soft: #f2f4f7;
+      --brand: #172033;
+      --teal: #2dd4bf;
+      --teal-dark: #0f766e;
+      --blue-soft: #e7f8f5;
+      --warning: #fef3c7;
+      --danger: #b91c1c;
+      --success: #166534;
     }
 
     * {
@@ -25,70 +29,213 @@
 
     body {
       margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
+      min-width: 320px;
+      min-height: 100vh;
+      font-family: "Source Sans Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
       color: var(--ink);
-      background: #ffffff;
+      background: var(--page);
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
     }
 
     main {
-      max-width: 980px;
+      max-width: 1120px;
       margin: 0 auto;
-      padding: 32px 24px 48px;
+      padding: 28px 24px 42px;
     }
 
     .brand-header {
-      display: grid;
-      grid-template-columns: minmax(180px, 360px) 1fr;
+      display: flex;
       align-items: center;
-      gap: 24px;
-      margin: 0 0 24px;
-      padding: 18px 20px;
-      background: var(--teal);
+      justify-content: space-between;
+      gap: 20px;
+      margin: 0 0 22px;
     }
 
     .brand-logo {
       display: block;
-      width: 100%;
-      max-width: 320px;
+      width: auto;
+      max-width: 240px;
       height: auto;
-      background: #fff;
-      padding: 10px 14px;
     }
 
     h1 {
       margin: 0;
-      color: #fff;
-      font-size: 28px;
-      line-height: 1.15;
-      text-align: right;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2rem, 4vw, 3.25rem);
+      letter-spacing: 0;
+      line-height: 1.04;
     }
 
     .version {
-      display: block;
-      margin-top: 6px;
-      font-size: 15px;
-      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      margin-left: 10px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      box-shadow: 0 10px 24px rgb(16 24 40 / 8%);
+      color: #344054;
+      font-family: "Source Sans Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 0.9rem;
+      font-weight: 800;
+      vertical-align: middle;
+      white-space: nowrap;
     }
 
-    .grid {
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .eyebrow span {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--teal-dark);
+    }
+
+    .command-band {
       display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+      padding: 16px;
+      border-radius: 8px;
+      background: var(--brand);
+      box-shadow: 0 20px 48px rgb(16 24 40 / 16%);
+      color: #d0d5dd;
+    }
+
+    .command-band > div,
+    .workspace-header > div,
+    .notes article {
+      min-width: 0;
+    }
+
+    .command-band strong {
+      display: block;
+      margin-bottom: 3px;
+      color: #fef08a;
+      font-size: 0.94rem;
+    }
+
+    .command-band span {
+      color: #d0d5dd;
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 170px;
+      min-height: 42px;
+      border: 0;
+      border-radius: 7px;
+      background: var(--teal);
+      color: #09201f;
+      font-size: 0.98rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition:
+        background-color 160ms ease,
+        color 160ms ease,
+        transform 160ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      background: #94a3b8;
+      color: #334155;
+      cursor: not-allowed;
+    }
+
+    .workspace {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 18px 45px rgb(16 24 40 / 10%);
+    }
+
+    .workspace-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       gap: 18px;
+      padding: 18px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h2 {
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.45rem;
+      letter-spacing: 0;
+    }
+
+    .workspace-header p {
+      margin-top: 5px;
+      color: var(--muted);
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .file-list {
+      display: grid;
     }
 
     .row {
       display: grid;
-      grid-template-columns: 220px minmax(220px, 1fr) 220px;
-      min-height: 68px;
-      border-bottom: 1px solid var(--line);
-      background: var(--panel);
+      grid-template-columns: 220px minmax(220px, 1fr) 190px;
+      min-height: 92px;
+      background: var(--surface);
+    }
+
+    .row + .row {
+      border-top: 1px solid var(--line-soft);
     }
 
     .label {
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
       padding: 14px 16px;
-      background: var(--blue);
+      background: #ddebf7;
+      font-weight: 800;
+    }
+
+    .label small {
+      display: block;
+      color: #475467;
+      font-size: 0.82rem;
       font-weight: 700;
+      line-height: 1.25;
     }
 
     .value {
@@ -96,7 +243,7 @@
       align-items: center;
       min-width: 0;
       padding: 14px 16px;
-      background: var(--gold);
+      background: var(--warning);
       font-weight: 700;
       overflow-wrap: anywhere;
     }
@@ -106,52 +253,57 @@
       align-items: center;
       justify-content: center;
       padding: 12px;
+      background: var(--surface-soft);
     }
 
     input[type="file"] {
-      width: 100%;
-      max-width: 190px;
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      clip-path: inset(50%);
     }
 
-    .run-band {
-      display: grid;
-      grid-template-columns: 1fr auto;
+    .file-picker {
+      display: inline-flex;
       align-items: center;
-      gap: 18px;
-      margin-top: 28px;
-      padding: 18px 20px;
-      background: var(--teal);
-      color: #fff;
-    }
-
-    button {
-      min-width: 190px;
-      min-height: 52px;
-      border: 0;
-      background: #138a47;
-      color: #fff;
-      font-size: 18px;
-      font-weight: 700;
+      justify-content: center;
+      min-height: 38px;
+      min-width: 120px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--surface);
+      color: #344054;
+      font-size: 0.9rem;
+      font-weight: 800;
       cursor: pointer;
+      transition:
+        border-color 160ms ease,
+        transform 160ms ease;
     }
 
-    button:disabled {
-      background: #97a3a6;
-      cursor: not-allowed;
+    .file-picker:hover {
+      border-color: #b9c2d0;
+      transform: translateY(-1px);
     }
 
     #status {
-      margin-top: 18px;
       min-height: 54px;
-      padding: 16px;
+      margin: 18px 0 0;
+      padding: 15px 18px;
       border: 1px solid var(--line);
-      background: #fff;
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 10px 24px rgb(16 24 40 / 6%);
       color: var(--muted);
-      font-weight: 700;
+      font-weight: 800;
     }
 
     #status[data-type="busy"] {
-      border-color: var(--teal);
+      border-color: var(--teal-dark);
       color: var(--teal-dark);
     }
 
@@ -166,40 +318,65 @@
     }
 
     .notes {
-      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .notes article {
+      min-height: 76px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 10px 24px rgb(16 24 40 / 7%);
       color: var(--muted);
+      font-weight: 700;
       line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .notes strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--ink);
+      font-weight: 800;
     }
 
     footer {
-      margin-top: 34px;
-      padding: 18px 20px;
-      border-top: 1px solid var(--line);
+      margin-top: 28px;
       color: var(--muted);
       line-height: 1.5;
       font-size: 14px;
+      font-weight: 700;
+      text-align: center;
     }
 
     footer a {
-      color: var(--teal-dark);
-      font-weight: 700;
+      color: var(--ink);
+      font-weight: 800;
     }
 
-    @media (max-width: 760px) {
+    @media (max-width: 820px) {
       main {
         padding: 20px 14px 36px;
       }
 
       .brand-header {
-        grid-template-columns: 1fr;
+        align-items: flex-start;
+        flex-direction: column;
       }
 
-      h1 {
-        text-align: left;
+      .version {
+        display: flex;
+        width: fit-content;
+        margin: 10px 0 0;
       }
 
+      .command-band,
       .row,
-      .run-band {
+      .notes {
         grid-template-columns: 1fr;
       }
 
@@ -210,46 +387,81 @@
       button {
         width: 100%;
       }
+
+      .workspace-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 <body>
   <main>
     <header class="brand-header">
-      <img class="brand-logo" src="./secret-escapes-logo.jpg" alt="Secret Escapes">
-      <h1>Offer Importer <span class="version">0.95.05.06.26</span></h1>
+      <div>
+        <img class="brand-logo" src="./secret-escapes-logo.jpg" alt="Secret Escapes">
+      </div>
+      <div>
+        <div class="eyebrow"><span></span>Excel upload tool</div>
+        <h1>Offer Importer <span class="version">0.96.05.06.26</span></h1>
+      </div>
     </header>
 
-    <section class="grid" aria-label="File selection">
-      <div class="row">
-        <div class="label">Template file</div>
-        <div class="value" id="template-name">No template selected</div>
-        <div class="action">
-          <input id="template-file" type="file" accept=".xlsx,.xlsm">
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="label">Source workbook</div>
-        <div class="value" id="offer-name">No source workbook selected</div>
-        <div class="action">
-          <input id="offer-file" type="file" accept=".xlsx,.xlsm,.xls">
-        </div>
-      </div>
-    </section>
-
-    <section class="run-band" aria-label="Generate workbook">
+    <section class="command-band" aria-label="Generate workbook">
       <div>
-        Creates a separate Excel file for each populated Rates and Allocation pair, then downloads all files directly.
+        <strong>Generate upload workbooks</strong>
+        <span>Creates a separate Excel file for each populated Rates and Allocation pair, then downloads all files directly.</span>
       </div>
       <button id="generate" type="button" disabled>Generate Excel</button>
     </section>
 
+    <section class="workspace" aria-label="File selection">
+      <div class="workspace-header">
+        <div>
+          <h2>Workbook Inputs</h2>
+          <p>Select the shared template and the workbook you want to convert.</p>
+        </div>
+      </div>
+
+      <div class="file-list">
+        <div class="row">
+          <div class="label">Template file</div>
+          <div class="value" id="template-name">No template selected</div>
+          <div class="action">
+            <label class="file-picker" for="template-file">Choose file</label>
+            <input id="template-file" type="file" accept=".xlsx,.xlsm">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="label">
+            Source workbook
+            <small>Offer form or Entry form.</small>
+          </div>
+          <div class="value" id="offer-name">No source workbook selected</div>
+          <div class="action">
+            <label class="file-picker" for="offer-file">Choose file</label>
+            <input id="offer-file" type="file" accept=".xlsx,.xlsm,.xls">
+          </div>
+        </div>
+      </div>
+    </section>
+
     <div id="status" role="status" aria-live="polite">Ready.</div>
 
-    <div class="notes">
-      Use the normal Shared Template file as the template input. Use either a submission offer form, rate-update workbook, or paired Rates/Allocation workbook as the source workbook.
-      If your browser asks, allow multiple downloads. The generated workbooks are new files; your original files are not changed.
+    <div class="notes" aria-label="Usage notes">
+      <article>
+        <strong>Template</strong>
+        Use the normal Shared Template file as the template input.
+      </article>
+      <article>
+        <strong>Source</strong>
+        Use a submission offer form, entry form, rate-update workbook, or paired Rates/Allocation workbook.
+      </article>
+      <article>
+        <strong>Downloads</strong>
+        If your browser asks, allow multiple downloads. Your original files are not changed.
+      </article>
     </div>
 
     <footer>
