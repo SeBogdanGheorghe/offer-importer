@@ -2,51 +2,15 @@ import { buildImportedFiles } from "./importer.js";
 
 const sourceInput = document.querySelector("#source-file");
 const sourceNameEl = document.querySelector("#source-name");
-const generateButton = document.querySelector("#generate");
 const statusEl = document.querySelector("#status");
 const dropzone = document.querySelector("#dropzone");
 const themeToggle = document.querySelector("#theme-toggle");
 
 let selectedSourceFile = null;
+let activeRunId = 0;
 
 initTheme();
 initFilePicker();
-updateButtonState();
-
-generateButton.addEventListener("click", async () => {
-  if (!selectedSourceFile) return;
-
-  setStatus("Working... reading the Excel file.", "busy");
-  generateButton.disabled = true;
-
-  try {
-    const offerBuffer = await selectedSourceFile.arrayBuffer();
-
-    setStatus("Building one Excel file for each populated Rates/Allocation pair.", "busy");
-    const result = await buildImportedFiles({
-      offerBuffer,
-      offerFileName: selectedSourceFile.name,
-    });
-
-    if (result.files.length === 1) {
-      downloadBlob(
-        result.files[0].outputBuffer,
-        result.files[0].filename,
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      );
-      setStatus(`Done. Detected ${result.sourceType}; downloaded ${result.files[0].filename}.`, "success");
-    } else {
-      setStatus(`Downloading ${result.files.length} Excel files. If the browser asks, allow multiple downloads.`, "busy");
-      await downloadFiles(result.files);
-      setStatus(`Done. Detected ${result.sourceType}; downloaded ${result.files.length} files for ${result.importedLabels.join(", ")}.`, "success");
-    }
-  } catch (error) {
-    console.error(error);
-    setStatus(error.message || String(error), "error");
-  } finally {
-    updateButtonState();
-  }
-});
 
 function initFilePicker() {
   sourceInput.addEventListener("change", () => {
@@ -89,11 +53,52 @@ function setSelectedSourceFile(file) {
   selectedSourceFile = file;
   sourceNameEl.textContent = file ? file.name : "No source workbook selected";
   dropzone.dataset.hasFile = file ? "true" : "false";
-  updateButtonState();
+  if (file) {
+    processSelectedSourceFile(file);
+  } else {
+    setStatus("Ready. Drop or choose a workbook to start.", "ready");
+  }
 }
 
-function updateButtonState() {
-  generateButton.disabled = !selectedSourceFile;
+async function processSelectedSourceFile(file) {
+  const runId = activeRunId + 1;
+  activeRunId = runId;
+  dropzone.dataset.processing = "true";
+  setStatus("Working... reading the Excel file.", "busy");
+
+  try {
+    const offerBuffer = await file.arrayBuffer();
+    if (runId !== activeRunId) return;
+
+    setStatus("Building one Excel file for each populated Rates/Allocation pair.", "busy");
+    const result = await buildImportedFiles({
+      offerBuffer,
+      offerFileName: file.name,
+    });
+    if (runId !== activeRunId) return;
+
+    if (result.files.length === 1) {
+      downloadBlob(
+        result.files[0].outputBuffer,
+        result.files[0].filename,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      );
+      setStatus(`Done. Detected ${result.sourceType}; downloaded ${result.files[0].filename}.`, "success");
+    } else {
+      setStatus(`Downloading ${result.files.length} Excel files. If the browser asks, allow multiple downloads.`, "busy");
+      await downloadFiles(result.files, runId);
+      if (runId !== activeRunId) return;
+      setStatus(`Done. Detected ${result.sourceType}; downloaded ${result.files.length} files for ${result.importedLabels.join(", ")}.`, "success");
+    }
+  } catch (error) {
+    if (runId !== activeRunId) return;
+    console.error(error);
+    setStatus(error.message || String(error), "error");
+  } finally {
+    if (runId === activeRunId) {
+      dropzone.dataset.processing = "false";
+    }
+  }
 }
 
 function initTheme() {
@@ -127,8 +132,9 @@ function setStatus(message, type) {
   statusEl.dataset.type = type;
 }
 
-async function downloadFiles(files) {
+async function downloadFiles(files, runId) {
   for (const file of files) {
+    if (runId !== activeRunId) return;
     downloadBlob(
       file.outputBuffer,
       file.filename,

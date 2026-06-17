@@ -8,3 +8,4 @@
 - 0.97.05.06.2026 Matched dark-mode button height to the version pill and updated the version format.
 - 0.98.07.06.2026 Added support for rate-update sheets where TOTAL SELL RATE starts in column C.
 - 0.99.17.06.2026 Added one-file drag-and-drop upload with a built-in template and stronger cabin-pair matching.
+- 0.100.17.06.2026 Fixed short `-Allo` cabin-pair matching and started processing automatically after file selection.

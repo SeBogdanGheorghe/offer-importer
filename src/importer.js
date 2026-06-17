@@ -413,7 +413,7 @@ function getPairKey(sheetName, kind) {
     .replace(/\((\d+)\)/g, " $1 ")
     .replace(/\b(total|upload|template|worksheet|sheet|sheets|tab|tabs|details|detail|departure|departures|summary|room|rooms|open|opens|available|availability|allotment|cabin|cabins)\b/g, " ")
     .replace(/\b(rates?|rate)\b/g, " ")
-    .replace(/\b(all|alloc[a-z]*|aloc[a-z]*|aloc|allocaiton|allot[a-z]*)\b/g, " ")
+    .replace(/\b(all|allo|alloc[a-z]*|aloc[a-z]*|aloc|allocaiton|allot[a-z]*)\b/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 

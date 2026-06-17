@@ -31,6 +31,83 @@ async function buildFilesAndInspect(sourcePath) {
   };
 }
 
+async function buildFilesAndInspectBuffer(offerBuffer, offerFileName) {
+  const result = await buildImportedFiles({ offerBuffer, offerFileName });
+
+  const files = [];
+  for (const file of result.files) {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(file.outputBuffer);
+    files.push({
+      filename: file.filename,
+      label: file.label,
+      sheetNames: workbook.worksheets.map((sheet) => sheet.name),
+      workbook,
+    });
+  }
+
+  return {
+    sourceType: result.sourceType,
+    labels: result.importedLabels,
+    files,
+  };
+}
+
+async function createOutOfOrderCabinWorkbook() {
+  const workbook = new ExcelJS.Workbook();
+  addRateSheet(workbook, "Eastern - Balcony Cabin", {
+    sellRate: 777,
+    supplierRate: 888,
+    startDate: new Date(2026, 6, 1),
+    departure: "LHR",
+    destination: "YYZ",
+  });
+  addRateSheet(workbook, "Eastern - Inside Cabin", {
+    sellRate: 111,
+    supplierRate: 222,
+    startDate: new Date(2026, 6, 2),
+    departure: "MAN",
+    destination: "YYZ",
+  });
+  addAllocationSheet(workbook, "Eastern Inside -Allo", {
+    startDate: new Date(2026, 6, 2),
+    rooms: 11,
+  });
+  addAllocationSheet(workbook, "Eastern Balcony -Allo", {
+    startDate: new Date(2026, 6, 1),
+    rooms: 33,
+  });
+  return workbook.xlsx.writeBuffer();
+}
+
+function addRateSheet(workbook, name, { sellRate, supplierRate, startDate, departure, destination }) {
+  const sheet = workbook.addWorksheet(name);
+  sheet.getCell("A1").value = "TOTAL SELL RATE (Secret Escapes)";
+  sheet.getCell("B1").value = "TOTAL SUPPLIER RATE (hotel's or tour operator's site)";
+  sheet.getCell("F1").value = "START DATE (YYYY-MM-DD)";
+  sheet.getCell("G1").value = "NUMBER OF NIGHTS";
+  sheet.getCell("I1").value = "DEPARTURE AIRPORT CODE";
+  sheet.getCell("J1").value = "DESTINATION AIRPORT CODE";
+  sheet.getCell("P1").value = "OUTBOUND OVERNIGHT FLIGHT";
+  sheet.getCell("Q1").value = "INBOUND OVERNIGHT FLIGHT";
+  sheet.getCell("A2").value = sellRate;
+  sheet.getCell("B2").value = supplierRate;
+  sheet.getCell("F2").value = startDate;
+  sheet.getCell("G2").value = 10;
+  sheet.getCell("I2").value = departure;
+  sheet.getCell("J2").value = destination;
+  sheet.getCell("P2").value = false;
+  sheet.getCell("Q2").value = true;
+}
+
+function addAllocationSheet(workbook, name, { startDate, rooms }) {
+  const sheet = workbook.addWorksheet(name);
+  sheet.getCell("A1").value = "START DATE (YYYY-MM-DD)";
+  sheet.getCell("B1").value = "NO. OF ROOMS ALLOCATED";
+  sheet.getCell("A2").value = startDate;
+  sheet.getCell("B2").value = rooms;
+}
+
 async function fileExists(filePath) {
   try {
     await fs.access(filePath);
@@ -80,6 +157,17 @@ assertEqual(cellValue(niagaraFiles.files[0].workbook, "Allocation (1)", "B2"), 3
 assertDate(cellValue(niagaraFiles.files[0].workbook, "Rates (1)", "F2"), 2026, 7, 1, "niagara inside rates F2");
 assertDate(cellValue(niagaraFiles.files[0].workbook, "Allocation (1)", "A2"), 2026, 7, 1, "niagara inside allocation A2");
 
+const outOfOrderCabinFiles = await buildFilesAndInspectBuffer(
+  await createOutOfOrderCabinWorkbook(),
+  "Out of order cabins.xlsx",
+);
+assertEqual(outOfOrderCabinFiles.files.length, 2, "out-of-order cabin file count");
+assertEqual(outOfOrderCabinFiles.labels.join("|"), "Eastern Balcony|Eastern Inside", "out-of-order cabin labels");
+assertEqual(cellValue(outOfOrderCabinFiles.files[0].workbook, "Rates (1)", "A2"), 777, "out-of-order balcony rate A2");
+assertEqual(cellValue(outOfOrderCabinFiles.files[0].workbook, "Allocation (1)", "B2"), 33, "out-of-order balcony allocation B2");
+assertEqual(cellValue(outOfOrderCabinFiles.files[1].workbook, "Rates (2)", "A2"), 111, "out-of-order inside rate A2");
+assertEqual(cellValue(outOfOrderCabinFiles.files[1].workbook, "Allocation (2)", "B2"), 11, "out-of-order inside allocation B2");
+
 const pandasFiles = await fileExists(pandasPath)
   ? await buildFilesAndInspect(pandasPath)
   : null;
@@ -95,6 +183,10 @@ console.log(JSON.stringify({
     count: niagaraFiles.files.length,
     labels: niagaraFiles.labels,
     firstFile: niagaraFiles.files[0].filename,
+  },
+  outOfOrderCabins: {
+    count: outOfOrderCabinFiles.files.length,
+    labels: outOfOrderCabinFiles.labels,
   },
   pandas: {
     count: pandasFiles?.files.length ?? 0,

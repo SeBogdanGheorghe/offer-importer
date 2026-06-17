@@ -1,6 +1,6 @@
 # Offer Importer
 
-Version: 0.99.17.06.2026
+Version: 0.100.17.06.2026
 
 Browser-based Excel importer for creating separate upload-template workbooks from Secret Escapes offer forms, rate-update workbooks, and paired Rates/Allocation tabs.
 
@@ -9,7 +9,7 @@ Browser-based Excel importer for creating separate upload-template workbooks fro
 Open the GitHub Pages site, then:
 
 1. Drop or choose the source workbook.
-2. Click **Generate Excel**.
+2. The tool starts automatically.
 3. If the browser asks, allow multiple downloads.
 
 All Excel processing runs locally in the browser. The selected Excel files are not uploaded to GitHub or any server.
