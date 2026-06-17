@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Offer Importer 0.98.07.06.2026</title>
+  <title>Offer Importer 0.99.17.06.2026</title>
   <style>
     :root {
       color-scheme: light;
@@ -282,6 +282,108 @@
       display: grid;
     }
 
+    .upload-panel {
+      padding: 18px;
+      background: var(--surface);
+    }
+
+    .dropzone {
+      display: grid;
+      place-items: center;
+      gap: 8px;
+      min-height: 154px;
+      padding: 24px;
+      border: 1px dashed #94a3b8;
+      border-radius: 8px;
+      background: var(--surface-soft);
+      color: var(--muted);
+      cursor: pointer;
+      text-align: center;
+      transition:
+        background-color 160ms ease,
+        border-color 160ms ease,
+        color 160ms ease,
+        transform 160ms ease;
+    }
+
+    .dropzone:hover,
+    .dropzone:focus-visible,
+    .dropzone[data-dragging="true"] {
+      border-color: var(--teal-dark);
+      color: var(--ink);
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    .dropzone[data-dragging="true"] {
+      background: var(--blue-soft);
+    }
+
+    .dropzone strong {
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.12rem;
+      letter-spacing: 0;
+    }
+
+    .dropzone span {
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+
+    .dropzone .source-name {
+      max-width: 100%;
+      color: var(--ink);
+      font-style: normal;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .dropzone[data-has-file="false"] .source-name {
+      display: none;
+    }
+
+    .dropzone-icon {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: 0 10px 24px rgb(16 24 40 / 8%);
+    }
+
+    .browse-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 0.9rem;
+      font-weight: 800;
+      box-shadow: 0 10px 24px rgb(16 24 40 / 6%);
+    }
+
+    :root[data-theme="dark"] .dropzone {
+      background: #0a111d;
+      border-color: #334155;
+    }
+
+    :root[data-theme="dark"] .dropzone[data-dragging="true"] {
+      background: #0c3b34;
+    }
+
+    :root[data-theme="dark"] .dropzone-icon,
+    :root[data-theme="dark"] .browse-pill {
+      box-shadow: 0 10px 24px rgb(0 0 0 / 35%);
+    }
+
     .row {
       display: grid;
       grid-template-columns: 220px minmax(220px, 1fr) 190px;
@@ -513,7 +615,7 @@
             <path d="m19.07 4.93-1.41 1.41"></path>
           </svg>
         </button>
-        <span class="version">0.98.07.06.2026</span>
+        <span class="version">0.99.17.06.2026</span>
       </div>
     </header>
 
@@ -521,38 +623,32 @@
       <div class="workspace-header">
         <div>
           <h2>Workbook Inputs</h2>
-          <p>Select the shared template and the workbook you want to convert.</p>
+          <p>Select the offer form, entry form, or rate-update workbook you want to convert.</p>
         </div>
       </div>
 
-      <div class="file-list">
-        <div class="row">
-          <div class="label">Template file</div>
-          <div class="value" id="template-name">No template selected</div>
-          <div class="action">
-            <label class="file-picker" for="template-file">Choose file</label>
-            <input id="template-file" type="file" accept=".xlsx,.xlsm">
+      <div class="upload-panel">
+        <div id="dropzone" class="dropzone" role="button" tabindex="0" data-dragging="false" data-has-file="false" aria-describedby="source-hint">
+          <div class="dropzone-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v12"></path>
+              <path d="m7 8 5-5 5 5"></path>
+              <path d="M5 21h14"></path>
+            </svg>
           </div>
+          <strong>Drop the source workbook here</strong>
+          <span id="source-hint">.xls, .xlsx, or .xlsm • offer form, entry form, or rate-update workbook</span>
+          <em id="source-name" class="source-name">No source workbook selected</em>
+          <span class="browse-pill">Choose file</span>
         </div>
-
-        <div class="row">
-          <div class="label">
-            Source workbook
-            <small>Offer form or Entry form.</small>
-          </div>
-          <div class="value" id="offer-name">No source workbook selected</div>
-          <div class="action">
-            <label class="file-picker" for="offer-file">Choose file</label>
-            <input id="offer-file" type="file" accept=".xlsx,.xlsm,.xls">
-          </div>
-        </div>
+        <input id="source-file" type="file" accept=".xlsx,.xlsm,.xls">
       </div>
     </section>
 
     <section class="command-band" aria-label="Generate workbook">
       <div>
         <strong>Generate upload workbooks</strong>
-        <span>Creates a separate Excel file for each populated Rates and Allocation pair, then downloads all files directly.</span>
+        <span>Uses the built-in upload template, creates one Excel file for each populated Rates/Allocation pair, then downloads all files directly.</span>
       </div>
       <button id="generate" type="button" disabled>Generate Excel</button>
     </section>
@@ -562,7 +658,7 @@
     <div class="notes" aria-label="Usage notes">
       <article>
         <strong>Template</strong>
-        Use the normal Shared Template file as the template input.
+        The normal upload template is built into the tool.
       </article>
       <article>
         <strong>Source</strong>
@@ -583,6 +679,6 @@
     </footer>
   </main>
 
-  <script src="./offer-importer.bundle.js?v=0.98.07.06.2026"></script>
+  <script src="./offer-importer.bundle.js?v=0.99.17.06.2026"></script>
 </body>
 </html>
