@@ -83,12 +83,12 @@ async function processSelectedSourceFile(file) {
         result.files[0].filename,
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       );
-      setStatus(`Done. Detected ${result.sourceType}; downloaded ${result.files[0].filename}.`, "success");
+      showSuccess(`Done. Detected ${result.sourceType}; downloaded ${result.files[0].filename}.`);
     } else {
       setStatus(`Downloading ${result.files.length} Excel files. If the browser asks, allow multiple downloads.`, "busy");
       await downloadFiles(result.files, runId);
       if (runId !== activeRunId) return;
-      setStatus(`Done. Detected ${result.sourceType}; downloaded ${result.files.length} files for ${result.importedLabels.join(", ")}.`, "success");
+      showSuccess(`Done. Detected ${result.sourceType}; downloaded ${result.files.length} files for ${result.importedLabels.join(", ")}.`);
     }
   } catch (error) {
     if (runId !== activeRunId) return;
@@ -130,6 +130,30 @@ function setTheme(theme) {
 function setStatus(message, type) {
   statusEl.textContent = message;
   statusEl.dataset.type = type;
+}
+
+function showSuccess(message) {
+  setStatus(message, "success");
+
+  requestAnimationFrame(() => {
+    if (typeof window.confetti !== "function") return;
+
+    const bounds = statusEl.getBoundingClientRect();
+    const x = clamp((bounds.left + bounds.width / 2) / window.innerWidth, 0.05, 0.95);
+    const y = clamp((bounds.top + bounds.height / 2) / window.innerHeight, 0.05, 0.95);
+
+    window.confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { x, y },
+      zIndex: 1000,
+      disableForReducedMotion: true,
+    });
+  });
+}
+
+function clamp(value, minimum, maximum) {
+  return Math.min(Math.max(value, minimum), maximum);
 }
 
 async function downloadFiles(files, runId) {

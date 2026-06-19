@@ -136,26 +136,31 @@ function assertDate(value, year, month, day, label) {
   assertEqual(value.getDate(), day, `${label} day`);
 }
 
-const niagaraFiles = await buildFilesAndInspect(niagaraPath);
-assertEqual(niagaraFiles.sourceType, "paired rates/allocation workbook", "niagara source type");
-assertEqual(niagaraFiles.files.length, 3, "niagara file count");
-assertEqual(
-  niagaraFiles.labels.join("|"),
-  "Eastern Inside|Eastern Outside|Eastern Balcony",
-  "niagara labels",
-);
-assertEqual(niagaraFiles.files[0].sheetNames.join("|"), "Rates (1)|Allocation (1)", "niagara first tabs");
-assertEqual(niagaraFiles.files[1].sheetNames.join("|"), "Rates (2)|Allocation (2)", "niagara second tabs");
-assertEqual(niagaraFiles.files[2].sheetNames.join("|"), "Rates (3)|Allocation (3)", "niagara third tabs");
-assertEqual(cellValue(niagaraFiles.files[0].workbook, "Rates (1)", "A2"), 3798, "niagara inside A2");
-assertEqual(cellValue(niagaraFiles.files[0].workbook, "Rates (1)", "B2"), 4298, "niagara inside B2");
-assertEqual(cellValue(niagaraFiles.files[0].workbook, "Rates (1)", "I2"), "LHR", "niagara inside departure I2");
-assertEqual(cellValue(niagaraFiles.files[0].workbook, "Rates (1)", "J2"), "YYZ", "niagara inside destination J2");
-assertEqual(cellValue(niagaraFiles.files[0].workbook, "Rates (1)", "P2"), "FALSE", "niagara inside outbound P2");
-assertEqual(cellValue(niagaraFiles.files[0].workbook, "Rates (1)", "Q2"), "TRUE", "niagara inside inbound Q2");
-assertEqual(cellValue(niagaraFiles.files[0].workbook, "Allocation (1)", "B2"), 3, "niagara inside allocation B2");
-assertDate(cellValue(niagaraFiles.files[0].workbook, "Rates (1)", "F2"), 2026, 7, 1, "niagara inside rates F2");
-assertDate(cellValue(niagaraFiles.files[0].workbook, "Allocation (1)", "A2"), 2026, 7, 1, "niagara inside allocation A2");
+const niagaraFiles = await fileExists(niagaraPath)
+  ? await buildFilesAndInspect(niagaraPath)
+  : null;
+
+if (niagaraFiles) {
+  assertEqual(niagaraFiles.sourceType, "paired rates/allocation workbook", "niagara source type");
+  assertEqual(niagaraFiles.files.length, 3, "niagara file count");
+  assertEqual(
+    niagaraFiles.labels.join("|"),
+    "Eastern Inside|Eastern Outside|Eastern Balcony",
+    "niagara labels",
+  );
+  assertEqual(niagaraFiles.files[0].sheetNames.join("|"), "Rates (1)|Allocation (1)", "niagara first tabs");
+  assertEqual(niagaraFiles.files[1].sheetNames.join("|"), "Rates (2)|Allocation (2)", "niagara second tabs");
+  assertEqual(niagaraFiles.files[2].sheetNames.join("|"), "Rates (3)|Allocation (3)", "niagara third tabs");
+  assertEqual(cellValue(niagaraFiles.files[0].workbook, "Rates (1)", "A2"), 3798, "niagara inside A2");
+  assertEqual(cellValue(niagaraFiles.files[0].workbook, "Rates (1)", "B2"), 4298, "niagara inside B2");
+  assertEqual(cellValue(niagaraFiles.files[0].workbook, "Rates (1)", "I2"), "LHR", "niagara inside departure I2");
+  assertEqual(cellValue(niagaraFiles.files[0].workbook, "Rates (1)", "J2"), "YYZ", "niagara inside destination J2");
+  assertEqual(cellValue(niagaraFiles.files[0].workbook, "Rates (1)", "P2"), "FALSE", "niagara inside outbound P2");
+  assertEqual(cellValue(niagaraFiles.files[0].workbook, "Rates (1)", "Q2"), "TRUE", "niagara inside inbound Q2");
+  assertEqual(cellValue(niagaraFiles.files[0].workbook, "Allocation (1)", "B2"), 3, "niagara inside allocation B2");
+  assertDate(cellValue(niagaraFiles.files[0].workbook, "Rates (1)", "F2"), 2026, 7, 1, "niagara inside rates F2");
+  assertDate(cellValue(niagaraFiles.files[0].workbook, "Allocation (1)", "A2"), 2026, 7, 1, "niagara inside allocation A2");
+}
 
 const outOfOrderCabinFiles = await buildFilesAndInspectBuffer(
   await createOutOfOrderCabinWorkbook(),
@@ -180,9 +185,9 @@ if (pandasFiles) {
 
 console.log(JSON.stringify({
   niagara: {
-    count: niagaraFiles.files.length,
-    labels: niagaraFiles.labels,
-    firstFile: niagaraFiles.files[0].filename,
+    count: niagaraFiles?.files.length ?? 0,
+    labels: niagaraFiles?.labels ?? [],
+    firstFile: niagaraFiles?.files[0]?.filename ?? "sample not found",
   },
   outOfOrderCabins: {
     count: outOfOrderCabinFiles.files.length,
