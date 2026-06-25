@@ -5,12 +5,15 @@ const sourceNameEl = document.querySelector("#source-name");
 const statusEl = document.querySelector("#status");
 const dropzone = document.querySelector("#dropzone");
 const themeToggle = document.querySelector("#theme-toggle");
+const googleSheetUrlInput = document.querySelector("#google-sheet-url");
+const googleSheetRunButton = document.querySelector("#google-sheet-run");
 
 let selectedSourceFile = null;
 let activeRunId = 0;
 
 initTheme();
 initFilePicker();
+initGoogleSheetImport();
 
 function initFilePicker() {
   sourceInput.addEventListener("change", () => {
@@ -61,35 +64,20 @@ function setSelectedSourceFile(file) {
 }
 
 async function processSelectedSourceFile(file) {
-  const runId = activeRunId + 1;
-  activeRunId = runId;
+  const runId = startRun();
   dropzone.dataset.processing = "true";
+  setGoogleSheetControlsDisabled(true);
   setStatus("Working... reading the Excel file.", "busy");
 
   try {
     const offerBuffer = await file.arrayBuffer();
     if (runId !== activeRunId) return;
 
-    setStatus("Building one Excel file for each populated Rates/Allocation pair.", "busy");
-    const result = await buildImportedFiles({
+    await processOfferBuffer({
       offerBuffer,
       offerFileName: file.name,
+      runId,
     });
-    if (runId !== activeRunId) return;
-
-    if (result.files.length === 1) {
-      downloadBlob(
-        result.files[0].outputBuffer,
-        result.files[0].filename,
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      );
-      showSuccess(`Done. Detected ${result.sourceType}; downloaded ${result.files[0].filename}.`);
-    } else {
-      setStatus(`Downloading ${result.files.length} Excel files. If the browser asks, allow multiple downloads.`, "busy");
-      await downloadFiles(result.files, runId);
-      if (runId !== activeRunId) return;
-      showSuccess(`Done. Detected ${result.sourceType}; downloaded ${result.files.length} files for ${result.importedLabels.join(", ")}.`);
-    }
   } catch (error) {
     if (runId !== activeRunId) return;
     console.error(error);
@@ -97,8 +85,163 @@ async function processSelectedSourceFile(file) {
   } finally {
     if (runId === activeRunId) {
       dropzone.dataset.processing = "false";
+      setGoogleSheetControlsDisabled(false);
     }
   }
+}
+
+function initGoogleSheetImport() {
+  googleSheetRunButton.addEventListener("click", () => {
+    processGoogleSheetUrl();
+  });
+
+  googleSheetUrlInput.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    processGoogleSheetUrl();
+  });
+}
+
+async function processGoogleSheetUrl() {
+  const runId = startRun();
+  dropzone.dataset.processing = "true";
+  setGoogleSheetControlsDisabled(true);
+
+  try {
+    const request = buildGoogleSheetExportRequest(googleSheetUrlInput.value);
+    setStatus("Working... loading the Google Sheet export.", "busy");
+
+    const response = await fetch(request.url, {
+      credentials: "omit",
+      redirect: "follow",
+      referrerPolicy: "no-referrer",
+    });
+    if (runId !== activeRunId) return;
+
+    if (!response.ok) {
+      throw new Error(`Google Sheets export failed with status ${response.status}. Share the Sheet as public or publish it to the web, then try again.`);
+    }
+
+    const offerBuffer = await response.arrayBuffer();
+    if (runId !== activeRunId) return;
+
+    if (!looksLikeXlsx(offerBuffer)) {
+      throw new Error("Google returned a web page instead of an Excel export. Share the Sheet as public or publish it to the web, then try again.");
+    }
+
+    await processOfferBuffer({
+      offerBuffer,
+      offerFileName: request.fileName,
+      runId,
+    });
+  } catch (error) {
+    if (runId !== activeRunId) return;
+    console.error(error);
+    setStatus(getGoogleSheetErrorMessage(error), "error");
+  } finally {
+    if (runId === activeRunId) {
+      dropzone.dataset.processing = "false";
+      setGoogleSheetControlsDisabled(false);
+    }
+  }
+}
+
+async function processOfferBuffer({ offerBuffer, offerFileName, runId }) {
+  setStatus("Building one Excel file for each populated Rates/Allocation pair.", "busy");
+  const result = await buildImportedFiles({
+    offerBuffer,
+    offerFileName,
+  });
+  if (runId !== activeRunId) return;
+
+  if (result.files.length === 1) {
+    downloadBlob(
+      result.files[0].outputBuffer,
+      result.files[0].filename,
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    showSuccess(`Done. Detected ${result.sourceType}; downloaded ${result.files[0].filename}.`);
+    return;
+  }
+
+  setStatus(`Downloading ${result.files.length} Excel files. If the browser asks, allow multiple downloads.`, "busy");
+  await downloadFiles(result.files, runId);
+  if (runId !== activeRunId) return;
+  showSuccess(`Done. Detected ${result.sourceType}; downloaded ${result.files.length} files for ${result.importedLabels.join(", ")}.`);
+}
+
+function buildGoogleSheetExportRequest(value) {
+  const rawValue = value.trim();
+  if (!rawValue) {
+    throw new Error("Paste a public Google Sheet URL first.");
+  }
+
+  let url;
+  try {
+    url = new URL(rawValue);
+  } catch {
+    throw new Error("Paste the full Google Sheet link, starting with https://docs.google.com/spreadsheets/.");
+  }
+
+  if (url.protocol !== "https:" || url.hostname !== "docs.google.com") {
+    throw new Error("For security, this experimental import only accepts https://docs.google.com/spreadsheets/ links.");
+  }
+
+  const existingFormat = (url.searchParams.get("format") || url.searchParams.get("output") || "").toLowerCase();
+  if (url.pathname.includes("/spreadsheets/") && (url.pathname.includes("/export") || url.pathname.includes("/pub")) && existingFormat === "xlsx") {
+    return {
+      url: url.toString(),
+      fileName: getGoogleSheetFileName(url),
+    };
+  }
+
+  const publishedMatch = /^\/spreadsheets\/d\/e\/([^/]+)/.exec(url.pathname);
+  if (publishedMatch) {
+    return {
+      url: `https://docs.google.com/spreadsheets/d/e/${publishedMatch[1]}/pub?output=xlsx`,
+      fileName: getGoogleSheetFileName(url, publishedMatch[1]),
+    };
+  }
+
+  const sheetMatch = /^\/spreadsheets\/d\/([^/]+)/.exec(url.pathname);
+  if (sheetMatch) {
+    return {
+      url: `https://docs.google.com/spreadsheets/d/${sheetMatch[1]}/export?format=xlsx`,
+      fileName: getGoogleSheetFileName(url, sheetMatch[1]),
+    };
+  }
+
+  throw new Error("Paste a Google Sheet link from docs.google.com/spreadsheets.");
+}
+
+function getGoogleSheetFileName(url, fallbackId = "") {
+  const urlTitle = url.searchParams.get("title") || "";
+  const idPart = fallbackId ? fallbackId.slice(0, 8) : "export";
+  const safeTitle = urlTitle.trim() || `Google Sheet ${idPart}`;
+  return `${safeTitle}.xlsx`;
+}
+
+function looksLikeXlsx(buffer) {
+  const bytes = new Uint8Array(buffer, 0, Math.min(4, buffer.byteLength));
+  return bytes[0] === 0x50 && bytes[1] === 0x4b;
+}
+
+function getGoogleSheetErrorMessage(error) {
+  const message = error.message || String(error);
+  if (error instanceof TypeError && /fetch/i.test(message)) {
+    return "The browser could not fetch that Google Sheet. Share it as public or publish it to the web, then try again.";
+  }
+  return message;
+}
+
+function setGoogleSheetControlsDisabled(isDisabled) {
+  googleSheetUrlInput.disabled = isDisabled;
+  googleSheetRunButton.disabled = isDisabled;
+}
+
+function startRun() {
+  activeRunId += 1;
+  return activeRunId;
 }
 
 function initTheme() {

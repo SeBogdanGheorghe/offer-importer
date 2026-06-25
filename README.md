@@ -1,6 +1,6 @@
 # Offer Importer
 
-Version: 1.01.19.06.2026
+Version: 1.02.25.06.2026
 
 Browser-based Excel importer for creating separate upload-template workbooks from Secret Escapes offer forms, rate-update workbooks, and paired Rates/Allocation tabs.
 
@@ -15,6 +15,7 @@ Open the GitHub Pages site, then:
 All Excel processing runs locally in the browser. The selected Excel files are not uploaded to GitHub or any server.
 The upload template is built into the browser tool, so no separate template file is required.
 The success animation uses the vendored `canvas-confetti` library; its license is included in `vendor/`.
+The Experimental Google Sheet import uses public/shared Google Sheets only and does not store API keys or credentials.
 
 ## Supported Source Workbooks
 

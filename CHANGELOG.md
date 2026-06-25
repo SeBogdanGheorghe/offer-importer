@@ -11,3 +11,4 @@
 - 0.100.17.06.2026 Fixed short `-Allo` cabin-pair matching and started processing automatically after file selection.
 - 1.00.17.06.2026 Switched to the stable 1.xx version format.
 - 1.01.19.06.2026 Added success-only confetti from completed Done messages.
+- 1.02.25.06.2026 Added an Experimental Google Sheet link importer using public `.xlsx` exports.

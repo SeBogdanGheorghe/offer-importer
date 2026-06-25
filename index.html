@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Offer Importer 1.01.19.06.2026</title>
+  <title>Offer Importer 1.02.25.06.2026</title>
   <style>
     :root {
       color-scheme: light;
@@ -205,6 +205,96 @@
       font-weight: 700;
       line-height: 1.45;
       overflow-wrap: anywhere;
+    }
+
+    .experimental {
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 10px 24px rgb(16 24 40 / 7%);
+      overflow: hidden;
+    }
+
+    :root[data-theme="dark"] .experimental {
+      box-shadow: 0 10px 24px rgb(0 0 0 / 30%);
+    }
+
+    .experimental summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 900;
+      list-style: none;
+    }
+
+    .experimental summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .experimental summary::after {
+      content: "";
+      width: 9px;
+      height: 9px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(45deg);
+      transition: transform 160ms ease;
+    }
+
+    .experimental[open] summary::after {
+      transform: translateY(3px) rotate(225deg);
+    }
+
+    .experimental-body {
+      display: grid;
+      gap: 12px;
+      padding: 0 16px 16px;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .experimental-body p {
+      padding-top: 14px;
+      color: var(--muted);
+      font-size: 0.94rem;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .google-sheet-form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .google-sheet-field {
+      width: 100%;
+      min-height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--surface-soft);
+      color: var(--ink);
+      font: inherit;
+      font-weight: 700;
+      outline: none;
+      transition:
+        border-color 160ms ease,
+        box-shadow 160ms ease;
+    }
+
+    .google-sheet-field:focus {
+      border-color: var(--teal-dark);
+      box-shadow: 0 0 0 3px rgb(45 212 191 / 18%);
+    }
+
+    .google-sheet-field::placeholder {
+      color: var(--muted);
     }
 
     button {
@@ -570,6 +660,7 @@
       }
 
       .command-band,
+      .google-sheet-form,
       .row,
       .notes {
         grid-template-columns: 1fr;
@@ -615,7 +706,7 @@
             <path d="m19.07 4.93-1.41 1.41"></path>
           </svg>
         </button>
-        <span class="version">1.01.19.06.2026</span>
+        <span class="version">1.02.25.06.2026</span>
       </div>
     </header>
 
@@ -652,6 +743,17 @@
       </div>
     </section>
 
+    <details class="experimental">
+      <summary>Experimental</summary>
+      <div class="experimental-body">
+        <p>Use a public Google Sheet link instead of uploading a workbook.</p>
+        <div class="google-sheet-form">
+          <input id="google-sheet-url" class="google-sheet-field" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="Paste Google Sheet URL">
+          <button id="google-sheet-run" type="button">Generate from Sheet</button>
+        </div>
+      </div>
+    </details>
+
     <div id="status" role="status" aria-live="polite">Ready. Drop or choose a workbook to start.</div>
 
     <div class="notes" aria-label="Usage notes">
@@ -679,6 +781,6 @@
   </main>
 
   <script src="./vendor/confetti.browser.min.js?v=1.9.4"></script>
-  <script src="./offer-importer.bundle.js?v=1.01.19.06.2026"></script>
+  <script src="./offer-importer.bundle.js?v=1.02.25.06.2026"></script>
 </body>
 </html>
