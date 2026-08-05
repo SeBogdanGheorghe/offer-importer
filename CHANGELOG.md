@@ -12,3 +12,4 @@
 - 1.00.17.06.2026 Switched to the stable 1.xx version format.
 - 1.01.19.06.2026 Added success-only confetti from completed Done messages.
 - 1.02.25.06.2026 Added an Experimental Google Sheet link importer using public `.xlsx` exports.
+- 1.03.05.08.2026 Added support for offer forms with `Rates (N) XXXX` tabs paired to `Allocation (N)` by number.

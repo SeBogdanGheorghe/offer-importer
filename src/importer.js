@@ -417,6 +417,15 @@ function getPairKey(sheetName, kind) {
     .replace(/\s+/g, " ")
     .trim();
 
+  // A parenthesis number is the authoritative pair key, so `Rates (1) INAO`
+  // pairs with `Allocation (1)`. Any trailing text becomes the label.
+  const parenNumber = /\((\d+)\)/.exec(name);
+  if (parenNumber) {
+    const number = Number(parenNumber[1]);
+    const suffix = cleaned.replace(/^\d+\b\s*/, "").trim();
+    return { key: `number:${number}`, label: suffix ? titleCase(suffix) : `Pair ${number}`, sortValue: number };
+  }
+
   if (!cleaned && explicitNumber !== null) {
     return { key: `number:${explicitNumber}`, label: `Pair ${explicitNumber}`, sortValue: explicitNumber };
   }
@@ -531,13 +540,9 @@ function getOfferNumbersFromMarkerRow(sourceWb, offerDetails, rowNumber) {
     const offerNumber = column - 1;
     const title = cleanText(sourceCellValue(offerDetails, rowNumber, column));
 
-    if (
-      title.length > 0
-      && (
-        sourceWb.getWorksheet(`Rates (${offerNumber})`)
-        || sourceWb.getWorksheet(`Allocation (${offerNumber})`)
-      )
-    ) {
+    // Requires the exact `Rates (N)` tab this path reads. Workbooks with
+    // suffixed tabs like `Rates (1) INAO` fall through to generic pairing.
+    if (title.length > 0 && sourceWb.getWorksheet(`Rates (${offerNumber})`)) {
       result.push(offerNumber);
     }
   }
