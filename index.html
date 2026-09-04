@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Offer Importer 1.03.05.08.2026</title>
+  <title>Offer Importer 1.04.05.08.2026</title>
   <style>
     :root {
       color-scheme: light;
@@ -220,34 +220,12 @@
       box-shadow: 0 10px 24px rgb(0 0 0 / 30%);
     }
 
-    .experimental summary {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+    .experimental-title {
+      margin: 0;
       padding: 14px 16px;
       color: var(--ink);
-      cursor: pointer;
+      font-size: 1rem;
       font-weight: 900;
-      list-style: none;
-    }
-
-    .experimental summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .experimental summary::after {
-      content: "";
-      width: 9px;
-      height: 9px;
-      border-right: 2px solid currentColor;
-      border-bottom: 2px solid currentColor;
-      transform: rotate(45deg);
-      transition: transform 160ms ease;
-    }
-
-    .experimental[open] summary::after {
-      transform: translateY(3px) rotate(225deg);
     }
 
     .experimental-body {
@@ -706,7 +684,7 @@
             <path d="m19.07 4.93-1.41 1.41"></path>
           </svg>
         </button>
-        <span class="version">1.03.05.08.2026</span>
+        <span class="version">1.04.05.08.2026</span>
       </div>
     </header>
 
@@ -743,8 +721,8 @@
       </div>
     </section>
 
-    <details class="experimental">
-      <summary>Experimental</summary>
+    <section class="experimental">
+      <h2 class="experimental-title">Google sheet link import</h2>
       <div class="experimental-body">
         <p>Use a public Google Sheet link instead of uploading a workbook.</p>
         <div class="google-sheet-form">
@@ -752,7 +730,7 @@
           <button id="google-sheet-run" type="button">Generate from Sheet</button>
         </div>
       </div>
-    </details>
+    </section>
 
     <div id="status" role="status" aria-live="polite">Ready. Drop or choose a workbook to start.</div>
 
@@ -781,6 +759,6 @@
   </main>
 
   <script src="./vendor/confetti.browser.min.js?v=1.9.4"></script>
-  <script src="./offer-importer.bundle.js?v=1.03.05.08.2026"></script>
+  <script src="./offer-importer.bundle.js?v=1.04.05.08.2026"></script>
 </body>
 </html>
