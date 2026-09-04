@@ -14,3 +14,4 @@
 - 1.02.25.06.2026 Added an Experimental Google Sheet link importer using public `.xlsx` exports.
 - 1.03.04.09.2026 Added support for offer forms with `Rates (N) XXXX` tabs paired to `Allocation (N)` by number.
 - 1.04.04.09.2026 Made the Google Sheet link import always visible and renamed it from Experimental.
+- 1.05.04.09.2026 Matched the Google sheet link import heading size to Workbook Inputs.
