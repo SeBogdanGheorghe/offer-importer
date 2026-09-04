@@ -1,6 +1,6 @@
 # Offer Importer
 
-Version: 1.04.05.08.2026
+Version: 1.04.04.09.2026
 
 Browser-based Excel importer for creating separate upload-template workbooks from Secret Escapes offer forms, rate-update workbooks, and paired Rates/Allocation tabs.
 
