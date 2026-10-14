@@ -1,6 +1,6 @@
 # Offer Importer — Apps Script edition
 
-Version `2.07.14.10.2026`
+Version `2.08.14.10.2026`
 
 The GitHub Pages Offer Importer, rebuilt as a Google Apps Script web app with an
 added **History** tab. Excel parsing and output generation are byte-for-byte the

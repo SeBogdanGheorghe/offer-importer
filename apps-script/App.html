@@ -420,7 +420,7 @@ async function refreshHistory() {
 function renderHistoryRow(row) {
   const pillClass = row.fileType === "3PP form" ? "pill-3pp" : "pill-update";
   const fileName = row.url
-    ? `<a class="link-open" href="${escapeAttribute(row.url)}" target="_blank" rel="noopener">${escapeHtml(row.fileName)} &#8599;</a>`
+    ? `<a class="link-open" href="${escapeAttribute(row.url)}" target="_blank" rel="noopener">${escapeHtml(row.fileName)}</a>`
     : escapeHtml(row.fileName);
 
   return `<tr>
