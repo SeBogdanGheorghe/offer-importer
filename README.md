@@ -1,12 +1,23 @@
 # Offer Importer
 
-Version: 1.05.04.09.2026
+Version: 1.06.14.10.2026
 
 Browser-based Excel importer for creating separate upload-template workbooks from Secret Escapes offer forms, rate-update workbooks, and paired Rates/Allocation tabs.
 
-## Use
+## Where the tool lives now
 
-Open the GitHub Pages site, then:
+The GitHub Pages site redirects to the Google Apps Script version, which adds a
+**History** tab and archives every uploaded workbook to Drive as a Google Sheet:
+
+https://script.google.com/a/macros/secretescapes.com/s/AKfycby2AuOyTSJm1hnUlAXLk_sVGGQ8kS9bQZLX1s-cvNUYxgOGqQMe5LbAyo8VYVYqumaEdQ/exec
+
+It is restricted to `secretescapes.com` accounts, so it asks for a Google login.
+
+The original browser-only tool is still here, unchanged and with no login, at
+[`standalone.html`](standalone.html) —
+https://sebogdangheorghe.github.io/offer-importer/standalone.html
+
+## Use
 
 1. Drop or choose the source workbook.
 2. The tool starts automatically.
@@ -27,11 +38,28 @@ The Google Sheet link import uses public/shared Google Sheets only and does not 
 - Cabin-pair rate updates such as `Eastern - Inside Cabin` / `Eastern Inside -Allo`; empty cabin groups are skipped.
 - Slash-separated airport codes such as `FCO/CIA`, which are split into separate upload rows.
 
+## Layout
+
+| Path | What it is |
+|---|---|
+| `index.html` | Redirect to the Apps Script web app |
+| `standalone.html` | The original browser-only tool |
+| `src/` | `importer.js` (Excel logic) and `browser.js` |
+| `offer-importer.bundle.js` | Built bundle used by `standalone.html` |
+| `apps-script/` | Source of the Apps Script web app, pushed with `clasp` |
+
+The Apps Script version reuses `src/importer.js` unchanged — `apps-script/Importer.html`
+is that file with only the ES module import/export lines removed, so a fix to the
+Excel logic applies to both. See `apps-script/README.md`.
+
 ## Deployment
 
 This repo is configured for GitHub Pages from the `main` branch root.
 
 When changes are pushed to `main`, GitHub Pages serves the updated static files automatically.
+
+The Apps Script app deploys separately from `apps-script/` with `clasp push` and
+`clasp update-deployment`; see `apps-script/README.md` for the exact commands.
 
 ## Changes
 

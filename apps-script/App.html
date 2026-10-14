@@ -1,0 +1,494 @@
+<script>
+/* =====================================================================
+ * Offer Importer — client logic.
+ * Upload / parsing / download behaviour is the GitHub Pages tool's
+ * browser.js. Added here: tabs, Drive archiving + History, and the
+ * Google Sheet import now goes through the server (no CORS).
+ * ===================================================================== */
+
+const sourceInput = document.querySelector("#source-file");
+const sourceNameEl = document.querySelector("#source-name");
+const statusEl = document.querySelector("#status");
+const syncStatusEl = document.querySelector("#sync-status");
+const dropzone = document.querySelector("#dropzone");
+const themeToggle = document.querySelector("#theme-toggle");
+const googleSheetUrlInput = document.querySelector("#google-sheet-url");
+const googleSheetRunButton = document.querySelector("#google-sheet-run");
+const versionPill = document.querySelector("#version-pill");
+const adminLinkEl = document.querySelector("#admin-link");
+
+let activeRunId = 0;
+let historyLoaded = false;
+
+initTheme();
+initTabs();
+initFilePicker();
+initGoogleSheetImport();
+initHistory();
+initLogLinkReveal();
+loadBootstrap();
+
+/* ----------------------------- server bridge ---------------------------- */
+
+function callServer(functionName, ...args) {
+  return new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler(resolve)
+      .withFailureHandler((error) => {
+        reject(new Error(error && error.message ? error.message : String(error)));
+      })[functionName](...args);
+  });
+}
+
+async function loadBootstrap() {
+  try {
+    const info = await callServer("getBootstrap");
+    versionPill.textContent = info.version;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+/* ------- version pill: three taps reveals the log sheet, for the
+ * people listed in LOG_VIEWERS server side. Silent for everyone else. ---- */
+
+function initLogLinkReveal() {
+  let clicks = 0;
+  let resetTimer = null;
+
+  versionPill.addEventListener("click", async () => {
+    clearTimeout(resetTimer);
+    clicks += 1;
+    resetTimer = setTimeout(() => { clicks = 0; }, 2000);
+    if (clicks < 3) return;
+    clicks = 0;
+
+    try {
+      const link = await callServer("getLogLink");
+      if (!link) return;
+      adminLinkEl.innerHTML = `History log: <a class="link-open" href="${escapeAttribute(link.url)}" target="_blank" rel="noopener">Open the log spreadsheet &#8599;</a>`;
+      adminLinkEl.hidden = false;
+    } catch (error) {
+      console.error(error);
+    }
+  });
+}
+
+/* --------------------------------- tabs --------------------------------- */
+
+function initTabs() {
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.addEventListener("click", () => selectTab(tab.id));
+  });
+}
+
+function selectTab(tabId) {
+  document.querySelectorAll(".tab").forEach((tab) => {
+    const isSelected = tab.id === tabId;
+    tab.setAttribute("aria-selected", isSelected ? "true" : "false");
+    document.querySelector("#" + tab.getAttribute("aria-controls")).hidden = !isSelected;
+  });
+
+  if (tabId === "tab-history" && !historyLoaded) {
+    historyLoaded = true;
+    refreshHistory();
+  }
+}
+
+/* ------------------------------ file picker ----------------------------- */
+
+function initFilePicker() {
+  sourceInput.addEventListener("change", () => {
+    setSelectedSourceFile(sourceInput.files[0] || null);
+  });
+
+  dropzone.addEventListener("click", () => sourceInput.click());
+
+  dropzone.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      sourceInput.click();
+    }
+  });
+
+  ["dragenter", "dragover"].forEach((eventName) => {
+    dropzone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropzone.dataset.dragging = "true";
+    });
+  });
+
+  ["dragleave", "drop"].forEach((eventName) => {
+    dropzone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropzone.dataset.dragging = "false";
+    });
+  });
+
+  dropzone.addEventListener("drop", (event) => {
+    const file = event.dataTransfer?.files?.[0] || null;
+    if (file) setSelectedSourceFile(file);
+  });
+}
+
+function setSelectedSourceFile(file) {
+  sourceNameEl.textContent = file ? file.name : "No source workbook selected";
+  dropzone.dataset.hasFile = file ? "true" : "false";
+  if (file) {
+    processSelectedSourceFile(file);
+  } else {
+    setStatus("Ready. Drop or choose a workbook to start.", "ready");
+  }
+}
+
+async function processSelectedSourceFile(file) {
+  const runId = startRun();
+  dropzone.dataset.processing = "true";
+  setGoogleSheetControlsDisabled(true);
+  setStatus("Working... reading the Excel file.", "busy");
+
+  try {
+    const offerBuffer = await file.arrayBuffer();
+    if (runId !== activeRunId) return;
+    await processOfferBuffer({ offerBuffer, offerFileName: file.name, runId });
+  } catch (error) {
+    if (runId !== activeRunId) return;
+    console.error(error);
+    setStatus(error.message || String(error), "error");
+  } finally {
+    if (runId === activeRunId) {
+      dropzone.dataset.processing = "false";
+      setGoogleSheetControlsDisabled(false);
+    }
+  }
+}
+
+/* -------------------------- Google Sheet import ------------------------- */
+
+function initGoogleSheetImport() {
+  googleSheetRunButton.addEventListener("click", () => processGoogleSheetUrl());
+  googleSheetUrlInput.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    processGoogleSheetUrl();
+  });
+}
+
+async function processGoogleSheetUrl() {
+  const runId = startRun();
+  dropzone.dataset.processing = "true";
+  setGoogleSheetControlsDisabled(true);
+
+  try {
+    setStatus("Working... loading the Google Sheet export.", "busy");
+    const exported = await callServer("fetchGoogleSheetAsXlsx", googleSheetUrlInput.value);
+    if (runId !== activeRunId) return;
+
+    const offerBuffer = base64ToArrayBuffer(exported.base64);
+    await processOfferBuffer({ offerBuffer, offerFileName: exported.fileName, runId });
+  } catch (error) {
+    if (runId !== activeRunId) return;
+    console.error(error);
+    setStatus(error.message || String(error), "error");
+  } finally {
+    if (runId === activeRunId) {
+      dropzone.dataset.processing = "false";
+      setGoogleSheetControlsDisabled(false);
+    }
+  }
+}
+
+/* ------------------------------ main pipeline --------------------------- */
+
+async function processOfferBuffer({ offerBuffer, offerFileName, runId }) {
+  setStatus("Building one Excel file for each populated Rates/Allocation pair.", "busy");
+  const result = await buildImportedFiles({ offerBuffer, offerFileName });
+  if (runId !== activeRunId) return;
+
+  // Two pairs can share a label (e.g. "5 Nts" twice), which would make two
+  // downloads fight over one file name. Keep every file distinct.
+  const files = withUniqueFilenames(result.files);
+
+  if (files.length === 1) {
+    downloadBlob(
+      files[0].outputBuffer,
+      files[0].filename,
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    showSuccess(`Done. Detected ${result.sourceType}; downloaded ${files[0].filename}.`);
+  } else {
+    setStatus(`Downloading ${files.length} Excel files. If the browser asks, allow multiple downloads.`, "busy");
+    await downloadFiles(files, runId);
+    if (runId !== activeRunId) return;
+    showSuccess(`Done. Detected ${result.sourceType}; downloaded ${files.length} files for ${result.importedLabels.join(", ")}.`);
+  }
+
+  archiveToHistory({ offerBuffer, offerFileName, outputCount: result.files.length });
+}
+
+function withUniqueFilenames(files) {
+  const seen = new Map();
+
+  return files.map((file) => {
+    const count = (seen.get(file.filename) || 0) + 1;
+    seen.set(file.filename, count);
+    if (count === 1) return file;
+
+    const dot = file.filename.lastIndexOf(".");
+    const base = dot === -1 ? file.filename : file.filename.slice(0, dot);
+    const extension = dot === -1 ? "" : file.filename.slice(dot);
+    return { ...file, filename: `${base} (${count})${extension}` };
+  });
+}
+
+/* --------------------- archive to Drive + History ----------------------- */
+
+async function archiveToHistory({ offerBuffer, offerFileName, outputCount }) {
+  setSyncStatus("File being converted to Google Sheet and sent to history", "busy");
+
+  try {
+    const payload = {
+      fileName: offerFileName,
+      base64: arrayBufferToBase64(offerBuffer),
+      mimeType: mimeTypeFor(offerFileName),
+      sheetNames: readSheetNames(offerBuffer),
+      outputCount,
+    };
+
+    const saved = await callServer("logUpload", payload);
+    setSyncStatus(
+      `Saved to history as ${saved.fileType}. <a class="link-open" href="${escapeAttribute(saved.url)}" target="_blank" rel="noopener">Open Google Sheet &#8599;</a>`,
+      "success",
+      true,
+    );
+    historyLoaded = false;
+  } catch (error) {
+    console.error(error);
+    setSyncStatus(`Could not archive this workbook: ${escapeHtml(error.message || String(error))}`, "error", true);
+  }
+}
+
+function readSheetNames(buffer) {
+  try {
+    return XLSX.read(buffer, { type: "array", bookSheets: true }).SheetNames || [];
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
+
+function mimeTypeFor(fileName) {
+  const name = String(fileName).toLowerCase();
+  if (name.endsWith(".xls")) return "application/vnd.ms-excel";
+  if (name.endsWith(".xlsm")) return "application/vnd.ms-excel.sheet.macroEnabled.12";
+  return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+}
+
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = "";
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(index, index + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function base64ToArrayBuffer(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes.buffer;
+}
+
+/* --------------------------------- history ------------------------------ */
+
+function initHistory() {
+  const rangeSelect = document.querySelector("#history-range");
+  const customRange = document.querySelector("#range-custom");
+
+  rangeSelect.addEventListener("change", () => {
+    customRange.dataset.visible = rangeSelect.value === "custom" ? "true" : "false";
+    refreshHistory();
+  });
+
+  document.querySelector("#history-type").addEventListener("change", refreshHistory);
+  document.querySelector("#history-from").addEventListener("change", refreshHistory);
+  document.querySelector("#history-to").addEventListener("change", refreshHistory);
+  document.querySelector("#history-refresh").addEventListener("click", refreshHistory);
+
+  let searchTimer = null;
+  document.querySelector("#history-search").addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(refreshHistory, 300);
+  });
+}
+
+async function refreshHistory() {
+  const body = document.querySelector("#history-body");
+  const empty = document.querySelector("#history-empty");
+  const count = document.querySelector("#history-count");
+  const rangeValue = document.querySelector("#history-range").value;
+
+  count.textContent = "Loading…";
+  empty.hidden = true;
+
+  const options = {
+    mode: rangeValue === "custom" ? "custom" : "days",
+    days: rangeValue === "custom" ? 7 : Number(rangeValue),
+    from: document.querySelector("#history-from").value,
+    to: document.querySelector("#history-to").value,
+    search: document.querySelector("#history-search").value,
+    type: document.querySelector("#history-type").value,
+  };
+
+  try {
+    const data = await callServer("getHistory", options);
+    body.innerHTML = data.rows.map(renderHistoryRow).join("");
+    empty.hidden = data.rows.length > 0;
+    count.textContent = data.rows.length === 1
+      ? "1 upload"
+      : `${data.rows.length} uploads`;
+  } catch (error) {
+    console.error(error);
+    body.innerHTML = "";
+    empty.hidden = true;
+    count.textContent = `Could not load history: ${error.message || error}`;
+  }
+}
+
+function renderHistoryRow(row) {
+  const pillClass = row.fileType === "EF" ? "pill-ef" : "pill-update";
+  const link = row.url
+    ? `<a class="link-open" href="${escapeAttribute(row.url)}" target="_blank" rel="noopener">Open &#8599;</a>`
+    : "—";
+
+  return `<tr>
+    <td>${escapeHtml(row.display)}</td>
+    <td>${escapeHtml(row.email)}</td>
+    <td><span class="pill ${pillClass}">${escapeHtml(row.fileType)}</span></td>
+    <td class="file-cell">${escapeHtml(row.fileName)}</td>
+    <td>${link}</td>
+  </tr>`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[char]));
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value);
+}
+
+/* --------------------------------- status -------------------------------- */
+
+function startRun() {
+  activeRunId += 1;
+  return activeRunId;
+}
+
+function setGoogleSheetControlsDisabled(isDisabled) {
+  googleSheetUrlInput.disabled = isDisabled;
+  googleSheetRunButton.disabled = isDisabled;
+}
+
+function setStatus(message, type) {
+  statusEl.textContent = message;
+  statusEl.dataset.type = type;
+}
+
+function setSyncStatus(message, type, allowHtml) {
+  syncStatusEl.hidden = false;
+  syncStatusEl.dataset.type = type;
+  if (allowHtml) {
+    syncStatusEl.innerHTML = message;
+  } else {
+    syncStatusEl.textContent = message;
+  }
+}
+
+function showSuccess(message) {
+  setStatus(message, "success");
+
+  requestAnimationFrame(() => {
+    if (typeof window.confetti !== "function") return;
+    const bounds = statusEl.getBoundingClientRect();
+    const x = clamp((bounds.left + bounds.width / 2) / window.innerWidth, 0.05, 0.95);
+    const y = clamp((bounds.top + bounds.height / 2) / window.innerHeight, 0.05, 0.95);
+    window.confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { x, y },
+      zIndex: 1000,
+      disableForReducedMotion: true,
+    });
+  });
+}
+
+function clamp(value, minimum, maximum) {
+  return Math.min(Math.max(value, minimum), maximum);
+}
+
+/* -------------------------------- downloads ------------------------------ */
+
+async function downloadFiles(files, runId) {
+  for (const file of files) {
+    if (runId !== activeRunId) return;
+    downloadBlob(
+      file.outputBuffer,
+      file.filename,
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    await wait(250);
+  }
+}
+
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function downloadBlob(buffer, filename, type) {
+  const blob = new Blob([buffer], { type });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.target = "_self";
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(link.href), 2000);
+}
+
+/* ---------------------------------- theme -------------------------------- */
+
+function initTheme() {
+  let storedTheme = null;
+  try { storedTheme = localStorage.getItem("theme"); } catch (ignored) {}
+
+  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+  const initialTheme = storedTheme === "light" || storedTheme === "dark"
+    ? storedTheme
+    : prefersDark ? "dark" : "light";
+
+  setTheme(initialTheme);
+
+  themeToggle.addEventListener("click", () => {
+    const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    try { localStorage.setItem("theme", nextTheme); } catch (ignored) {}
+  });
+}
+
+function setTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  const nextThemeName = theme === "dark" ? "light" : "dark";
+  const label = `Switch to ${nextThemeName} mode`;
+  themeToggle.setAttribute("aria-label", label);
+  themeToggle.title = label;
+}
+</script>
