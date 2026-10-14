@@ -129,5 +129,107 @@ function getBootstrapShape() {
   return keys;
 }
 
+/* --- hotel names pulled off the form ------------------------------------ */
+// Minimal stand-ins for the two SheetJS helpers the extractor uses.
+const XLSX = {
+  utils: {
+    encode_cell: ({ r, c }) => {
+      let name = '';
+      let n = c;
+      do { name = String.fromCharCode(65 + (n % 26)) + name; n = Math.floor(n / 26) - 1; } while (n >= 0);
+      return name + (r + 1);
+    },
+    decode_range: (ref) => {
+      const point = (address) => {
+        const parts = /^([A-Z]+)(\d+)$/.exec(address);
+        let column = 0;
+        for (const character of parts[1]) column = column * 26 + (character.charCodeAt(0) - 64);
+        return { c: column - 1, r: Number(parts[2]) - 1 };
+      };
+      const [from, to] = ref.split(':');
+      return { s: point(from), e: point(to) };
+    },
+  },
+};
+
+const hotelSource = appSource.slice(
+  appSource.indexOf('const HOTEL_LABEL ='),
+  appSource.indexOf('function mimeTypeFor'),
+);
+eval(hotelSource);
+
+function fakeWorkbook(rows) {
+  const sheet = {};
+  let lastColumn = 0;
+  rows.forEach((row, r) => row.forEach((value, c) => {
+    if (value === null || value === undefined || value === '') return;
+    sheet[XLSX.utils.encode_cell({ r, c })] = { t: 's', v: value };
+    if (c > lastColumn) lastColumn = c;
+  }));
+  sheet['!ref'] = 'A1:' + XLSX.utils.encode_cell({ r: Math.max(rows.length - 1, 0), c: lastColumn });
+  return { SheetNames: ['Offer Details'], Sheets: { 'Offer Details': sheet } };
+}
+
+// the layout from the form: a label on the left, one hotel per column
+const oneHotel = fakeWorkbook([
+  ['HOTEL INFORMATION', 'Hotel 1', 'Hotel 2', 'Hotel 3', 'Hotel 4'],
+  ['Hotel name', 'Eurostars Palazzo Zichy', '', '', ''],
+  ['Hotel website', 'https://www.eurostarspalazzozichy.com/', '', '', ''],
+  ['No. of hotel nights', '4,5 & 7', '', '', ''],
+]);
+check('the screenshot case: one hotel', extractHotelNames(oneHotel), ['Eurostars Palazzo Zichy']);
+
+check('many hotels, in column order', extractHotelNames(fakeWorkbook([
+  ['HOTEL INFORMATION', 'Hotel 1', 'Hotel 2', 'Hotel 3'],
+  ['Hotel name', 'Hotel Alpha', 'Hotel Beta', 'Hotel Gamma'],
+])), ['Hotel Alpha', 'Hotel Beta', 'Hotel Gamma']);
+
+check('gaps between hotels are skipped', extractHotelNames(fakeWorkbook([
+  ['Hotel name', 'Hotel Alpha', '', 'Hotel Gamma'],
+])), ['Hotel Alpha', 'Hotel Gamma']);
+
+check('the label itself is never collected', extractHotelNames(fakeWorkbook([
+  ['Hotel name', 'Hotel Alpha'],
+])).indexOf('Hotel name'), -1);
+
+check('label casing does not matter', extractHotelNames(fakeWorkbook([
+  ['HOTEL NAME', 'Hotel Alpha'],
+])), ['Hotel Alpha']);
+
+check('the plural label also works', extractHotelNames(fakeWorkbook([
+  ['Hotel names', 'Hotel Alpha'],
+])), ['Hotel Alpha']);
+
+check('the same hotel twice is listed once', extractHotelNames(fakeWorkbook([
+  ['Hotel name', 'Hotel Alpha', 'hotel alpha', 'Hotel Beta'],
+])), ['Hotel Alpha', 'Hotel Beta']);
+
+check('a workbook with no hotel row gives nothing', extractHotelNames(fakeWorkbook([
+  ['TOTAL SELL RATE', 'TOTAL SUPPLIER RATE'],
+  [1799, 1998],
+])), []);
+
+check('whitespace in a name is tidied',
+  extractHotelNames(fakeWorkbook([['Hotel name', '  Eurostars   Palazzo  Zichy ']])),
+  ['Eurostars Palazzo Zichy']);
+
+/* --- stored and searched ------------------------------------------------ */
+check('names are stored comma separated',
+  joinHotelNames_(['Hotel Alpha', 'Hotel Beta', 'Hotel Gamma']), 'Hotel Alpha, Hotel Beta, Hotel Gamma');
+check('no hotels stores an empty cell', joinHotelNames_([]), '');
+check('blank entries are dropped', joinHotelNames_(['Hotel Alpha', '   ', 'Hotel Beta']), 'Hotel Alpha, Hotel Beta');
+
+const hotelRow = {
+  fileName: 'OFFER FORM - Budapest.xlsx',
+  email: 'b.gheorghe@secretescapes.com',
+  fileType: '3PP form',
+  hotelNames: 'Eurostars Palazzo Zichy, Hotel Moments Budapest',
+};
+const findsHotel = (q) => matchesTokens_(searchTokens_(q), hotelRow);
+check('searching a hotel name finds the upload', findsHotel('Palazzo Zichy'), true);
+check('searching the second hotel works too', findsHotel('Moments Budapest'), true);
+check('partial hotel word matches', findsHotel('eurostars'), true);
+check('an unrelated hotel does not match', findsHotel('Hilton'), false);
+
 console.log(failures ? `\n${failures} FAILED` : '\nAll checks passed.');
 process.exit(failures ? 1 : 0);

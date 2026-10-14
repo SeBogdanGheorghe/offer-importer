@@ -6,10 +6,11 @@
  * Google Sheet and records a History row.
  */
 
-var VERSION = '2.05.14.10.2026';
+var VERSION = '2.06.14.10.2026';
 var FOLDER_ID = '1JKUqS-loYgZjvJULYY4xQmGnoIuVMrNt';
 var LOG_SPREADSHEET_ID = '1Iw4_A5SnVXxgxkTVrVkkcUWGOMyqMo0cSflhEvnumkw';
-var LOG_HEADERS = ['Timestamp', 'User_Email', 'File_Type', 'File_Name', 'Sheet_URL', 'Outputs'];
+var LOG_HEADERS = ['Timestamp', 'User_Email', 'File_Type', 'File_Name', 'Sheet_URL', 'Outputs', 'Hotel_Names'];
+var MAX_HOTEL_NAMES = 60;
 var FILE_TYPE_3PP = '3PP form';
 var FILE_TYPE_UPDATE = 'update form';
 /** Only these people can reveal the raw log spreadsheet link. */
@@ -52,7 +53,7 @@ function getUserEmail_() {
  * ------------------------------------------------------------------ */
 
 /**
- * payload: { fileName, base64, mimeType, sheetNames: [], outputCount }
+ * payload: { fileName, base64, mimeType, sheetNames: [], hotelNames: [], outputCount }
  */
 function logUpload(payload) {
   payload = payload || {};
@@ -88,7 +89,8 @@ function logUpload(payload) {
     fileType,
     fileName,
     url,
-    Number(payload.outputCount || 0)
+    Number(payload.outputCount || 0),
+    joinHotelNames_(payload.hotelNames)
   ]);
 
   return { fileType: fileType, url: url, fileName: fileName };
@@ -112,16 +114,34 @@ function normalizeFileType_(value) {
   return text.toUpperCase() === 'EF' ? FILE_TYPE_3PP : text;
 }
 
+/** One cell, comma separated, however many hotels the form lists. */
+function joinHotelNames_(hotelNames) {
+  if (!hotelNames || !hotelNames.length) return '';
+
+  var cleaned = [];
+  for (var index = 0; index < hotelNames.length && cleaned.length < MAX_HOTEL_NAMES; index += 1) {
+    var name = String(hotelNames[index] || '').replace(/\s+/g, ' ').trim();
+    if (name) cleaned.push(name);
+  }
+
+  return cleaned.join(', ');
+}
+
 function stripExtension_(fileName) {
   return String(fileName).replace(/\.[^.]+$/, '');
 }
 
 function getLogSheet_() {
   var sheet = SpreadsheetApp.openById(LOG_SPREADSHEET_ID).getSheets()[0];
+
   if (sheet.getLastRow() === 0) {
     sheet.getRange(1, 1, 1, LOG_HEADERS.length).setValues([LOG_HEADERS]).setFontWeight('bold');
     sheet.setFrozenRows(1);
+  } else if (sheet.getLastColumn() < LOG_HEADERS.length) {
+    // a column was added after this sheet was first written
+    sheet.getRange(1, 1, 1, LOG_HEADERS.length).setValues([LOG_HEADERS]).setFontWeight('bold');
   }
+
   return sheet;
 }
 
@@ -171,7 +191,8 @@ function getHistory(options) {
       fileType: normalizeFileType_(value[2]),
       fileName: String(value[3] || ''),
       url: String(value[4] || ''),
-      outputs: value[5]
+      outputs: value[5],
+      hotelNames: String(value[6] || '')
     };
 
     if (wantedType !== 'all' && row.fileType !== wantedType) continue;
@@ -224,7 +245,9 @@ function searchTokens_(query) {
 
 function matchesTokens_(tokens, row) {
   if (!tokens.length) return true;
-  var haystack = normalizeText_(row.fileName + ' ' + row.email + ' ' + row.fileType);
+  var haystack = normalizeText_(
+    row.fileName + ' ' + row.email + ' ' + row.fileType + ' ' + row.hotelNames
+  );
   for (var index = 0; index < tokens.length; index += 1) {
     if (haystack.indexOf(tokens[index]) === -1) return false;
   }

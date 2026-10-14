@@ -1,6 +1,6 @@
 # Offer Importer — Apps Script edition
 
-Version `2.05.14.10.2026`
+Version `2.06.14.10.2026`
 
 The GitHub Pages Offer Importer, rebuilt as a Google Apps Script web app with an
 added **History** tab. Excel parsing and output generation are byte-for-byte the
@@ -39,7 +39,12 @@ repo with only the ES module import/export lines removed.
 before the rename still say `EF` in the spreadsheet; they are shown and
 filtered as `3PP form`.
 
-## History
+## Hotel names
+
+The form lists hotels across one row — a `Hotel name` label on the left, then
+one hotel per column. All of them are read off that row (however many there
+are), stored comma separated in `Hotel_Names`, shown in the History table and
+included in the search text.
 
 Defaults to the last 7 days; 14 / 30 days or a custom date range are available,
 plus a type filter and a search box. Search is token based and ignores
@@ -52,7 +57,8 @@ matches on the uploader's email.
 - Archived sheets: https://drive.google.com/drive/folders/1JKUqS-loYgZjvJULYY4xQmGnoIuVMrNt
 - Log rows: https://docs.google.com/spreadsheets/d/1Iw4_A5SnVXxgxkTVrVkkcUWGOMyqMo0cSflhEvnumkw/edit
 
-Columns: `Timestamp`, `User_Email`, `File_Type`, `File_Name`, `Sheet_URL`, `Outputs`.
+Columns: `Timestamp`, `User_Email`, `File_Type`, `File_Name`, `Sheet_URL`,
+`Outputs`, `Hotel_Names`.
 Headers are written automatically if the sheet is empty.
 
 ## Log spreadsheet link

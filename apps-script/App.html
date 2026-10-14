@@ -247,11 +247,13 @@ async function archiveToHistory({ offerBuffer, offerFileName, outputCount }) {
   setSyncStatus("File being converted to Google Sheet and sent to history", "busy");
 
   try {
+    const meta = readWorkbookMeta(offerBuffer);
     const payload = {
       fileName: offerFileName,
       base64: arrayBufferToBase64(offerBuffer),
       mimeType: mimeTypeFor(offerFileName),
-      sheetNames: readSheetNames(offerBuffer),
+      sheetNames: meta.sheetNames,
+      hotelNames: meta.hotelNames,
       outputCount,
     };
 
@@ -268,13 +270,69 @@ async function archiveToHistory({ offerBuffer, offerFileName, outputCount }) {
   }
 }
 
-function readSheetNames(buffer) {
+/* The form lists hotels across one row: a "Hotel name" label in the left
+ * column, then one hotel per column (Hotel 1, Hotel 2, ... as many as used). */
+const HOTEL_LABEL = /^hotel\s*names?\b/;
+const HOTEL_LABEL_COLUMNS = 2;
+const MAX_HOTEL_SCAN_ROWS = 400;
+const MAX_HOTELS = 60;
+
+function readWorkbookMeta(buffer) {
   try {
-    return XLSX.read(buffer, { type: "array", bookSheets: true }).SheetNames || [];
+    const workbook = XLSX.read(buffer, { type: "array", raw: true });
+    return {
+      sheetNames: workbook.SheetNames || [],
+      hotelNames: extractHotelNames(workbook),
+    };
   } catch (error) {
     console.error(error);
-    return [];
+    return { sheetNames: [], hotelNames: [] };
   }
+}
+
+function extractHotelNames(workbook) {
+  const names = [];
+  const seen = new Set();
+
+  for (const sheetName of workbook.SheetNames || []) {
+    const sheet = workbook.Sheets[sheetName];
+    if (!sheet || !sheet["!ref"]) continue;
+
+    const range = XLSX.utils.decode_range(sheet["!ref"]);
+    const lastRow = Math.min(range.e.r, range.s.r + MAX_HOTEL_SCAN_ROWS);
+
+    for (let row = range.s.r; row <= lastRow; row += 1) {
+      const labelColumn = findHotelLabelColumn(sheet, range, row);
+      if (labelColumn === -1) continue;
+
+      for (let column = labelColumn + 1; column <= range.e.c; column += 1) {
+        const value = cellText(sheet, row, column);
+        if (!value || HOTEL_LABEL.test(value.toLowerCase())) continue;
+
+        const key = value.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        names.push(value);
+        if (names.length >= MAX_HOTELS) return names;
+      }
+    }
+  }
+
+  return names;
+}
+
+function findHotelLabelColumn(sheet, range, row) {
+  const lastLabelColumn = Math.min(range.s.c + HOTEL_LABEL_COLUMNS - 1, range.e.c);
+  for (let column = range.s.c; column <= lastLabelColumn; column += 1) {
+    if (HOTEL_LABEL.test(cellText(sheet, row, column).toLowerCase())) return column;
+  }
+  return -1;
+}
+
+function cellText(sheet, row, column) {
+  const cell = sheet[XLSX.utils.encode_cell({ r: row, c: column })];
+  if (!cell || cell.t === "z" || cell.v === undefined || cell.v === null) return "";
+  return String(cell.v).replace(/\s+/g, " ").trim();
 }
 
 function mimeTypeFor(fileName) {
@@ -370,6 +428,7 @@ function renderHistoryRow(row) {
     <td>${escapeHtml(row.email)}</td>
     <td><span class="pill ${pillClass}">${escapeHtml(row.fileType)}</span></td>
     <td class="file-cell">${escapeHtml(row.fileName)}</td>
+    <td class="hotel-cell">${escapeHtml(row.hotelNames) || "&mdash;"}</td>
     <td>${link}</td>
   </tr>`;
 }
