@@ -231,5 +231,29 @@ check('searching the second hotel works too', findsHotel('Moments Budapest'), tr
 check('partial hotel word matches', findsHotel('eurostars'), true);
 check('an unrelated hotel does not match', findsHotel('Hilton'), false);
 
+/* --- CSV export --------------------------------------------------------- */
+const csvSource = appSource.slice(
+  appSource.indexOf('function toCsvValue'),
+  appSource.indexOf('function buildExportName'),
+);
+eval(csvSource);
+
+check('plain text is quoted', toCsvValue('Hotel Alpha'), '"Hotel Alpha"');
+check('a comma stays inside one field', toCsvValue('Alpha, Beta'), '"Alpha, Beta"');
+check('embedded quotes are doubled', toCsvValue('5" screen'), '"5"" screen"');
+check('empty values survive', toCsvValue(''), '""');
+check('null becomes empty, not "null"', toCsvValue(null), '""');
+check('a real file name round-trips',
+  toCsvValue('RATE UPDATE_Amsterdam & Berlin 13.10.2026.xls'),
+  '"RATE UPDATE_Amsterdam & Berlin 13.10.2026.xls"');
+
+// a spreadsheet would otherwise run these as formulas when the file is opened
+check('= is neutralised', toCsvValue('=1+1'), '"\'=1+1"');
+check('+ is neutralised', toCsvValue('+44 20'), '"\'+44 20"');
+check('- is neutralised', toCsvValue('-1'), '"\'-1"');
+check('@ is neutralised', toCsvValue('@SUM(A1)'), '"\'@SUM(A1)"');
+check('an ordinary email is left alone',
+  toCsvValue('b.gheorghe@secretescapes.com'), '"b.gheorghe@secretescapes.com"');
+
 console.log(failures ? `\n${failures} FAILED` : '\nAll checks passed.');
 process.exit(failures ? 1 : 0);

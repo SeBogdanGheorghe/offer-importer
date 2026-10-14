@@ -1,6 +1,6 @@
 # Offer Importer — Apps Script edition
 
-Version `2.08.14.10.2026`
+Version `2.09.14.10.2026`
 
 The GitHub Pages Offer Importer, rebuilt as a Google Apps Script web app with an
 added **History** tab. Excel parsing and output generation are byte-for-byte the
@@ -51,6 +51,14 @@ plus a type filter and a search box. Search is token based and ignores
 punctuation, so `Amsterdam & Berlin` finds
 `RATE UPDATE_Amsterdam & Berlin with European Sleeper 13.10.2026`. It also
 matches on the uploader's email.
+
+## Export
+
+**Export CSV** saves exactly what the filters are currently showing — same
+period, type, and search — as `Offer Importer history <date>.csv`. Values
+starting with `=`, `+`, `-` or `@` are prefixed with an apostrophe so a
+spreadsheet does not execute them as formulas, and the file carries a UTF-8
+BOM so accented hotel names open correctly in Excel.
 
 ## Storage
 

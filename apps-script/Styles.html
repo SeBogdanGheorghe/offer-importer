@@ -729,6 +729,16 @@
       box-shadow: 0 0 0 3px rgb(45 212 191 / 18%);
     }
 
+    .history-controls button { min-width: 124px; }
+
+    .button-secondary {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--ink);
+    }
+
+    .button-secondary:hover:not(:disabled) { border-color: var(--teal-dark); }
+
     .range-custom { display: none; gap: 10px; align-items: center; }
     .range-custom[data-visible="true"] { display: flex; flex-wrap: wrap; }
 

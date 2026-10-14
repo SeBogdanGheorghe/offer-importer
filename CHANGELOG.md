@@ -20,3 +20,4 @@
 - 1.08.14.10.2026 Apps Script: History now shows and searches the hotel names read off the 3PP form.
 - 1.09.14.10.2026 Apps Script: History shows the time under the date and links straight from the file name.
 - 1.10.14.10.2026 Apps Script: dropped the arrow from the History file link.
+- 1.11.14.10.2026 Apps Script: added an Export CSV button for the filtered History view.

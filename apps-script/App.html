@@ -19,6 +19,7 @@ const adminLinkEl = document.querySelector("#admin-link");
 
 let activeRunId = 0;
 let historyLoaded = false;
+let historyRows = [];
 
 initTheme();
 initTabs();
@@ -376,6 +377,7 @@ function initHistory() {
   document.querySelector("#history-from").addEventListener("change", refreshHistory);
   document.querySelector("#history-to").addEventListener("change", refreshHistory);
   document.querySelector("#history-refresh").addEventListener("click", refreshHistory);
+  document.querySelector("#history-export").addEventListener("click", exportHistory);
 
   let searchTimer = null;
   document.querySelector("#history-search").addEventListener("input", () => {
@@ -404,6 +406,7 @@ async function refreshHistory() {
 
   try {
     const data = await callServer("getHistory", options);
+    historyRows = data.rows;
     body.innerHTML = data.rows.map(renderHistoryRow).join("");
     empty.hidden = data.rows.length > 0;
     count.textContent = data.rows.length === 1
@@ -411,10 +414,44 @@ async function refreshHistory() {
       : `${data.rows.length} uploads`;
   } catch (error) {
     console.error(error);
+    historyRows = [];
     body.innerHTML = "";
     empty.hidden = true;
     count.textContent = `Could not load history: ${error.message || error}`;
   }
+}
+
+/* Exports exactly what the filters are currently showing. */
+function exportHistory() {
+  if (!historyRows.length) {
+    document.querySelector("#history-count").textContent = "Nothing to export for this period.";
+    return;
+  }
+
+  const rows = [
+    ["Date", "Time", "Uploaded by", "Type", "File", "Hotel names", "Link"],
+    ...historyRows.map((row) => [
+      row.date, row.time, row.email, row.fileType, row.fileName, row.hotelNames, row.url,
+    ]),
+  ];
+
+  // The BOM keeps accented hotel names readable when Excel opens the file.
+  const csv = "\uFEFF" + rows.map((columns) => columns.map(toCsvValue).join(",")).join("\r\n");
+  downloadBlob(csv, buildExportName(), "text/csv;charset=utf-8");
+}
+
+function toCsvValue(value) {
+  let text = String(value ?? "");
+  // a leading =, +, - or @ makes a spreadsheet treat the cell as a formula
+  if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function buildExportName() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `Offer Importer history ${now.getFullYear()}-${month}-${day}.csv`;
 }
 
 function renderHistoryRow(row) {
