@@ -18,3 +18,4 @@
 - 1.06.14.10.2026 Site now redirects to the Apps Script version with History; old tool kept at `standalone.html`.
 - 1.07.14.10.2026 Apps Script: renamed the `EF` file type to `3PP form`; older rows read back under the new name.
 - 1.08.14.10.2026 Apps Script: History now shows and searches the hotel names read off the 3PP form.
+- 1.09.14.10.2026 Apps Script: History shows the time under the date and links straight from the file name.

@@ -6,7 +6,7 @@
  * Google Sheet and records a History row.
  */
 
-var VERSION = '2.06.14.10.2026';
+var VERSION = '2.07.14.10.2026';
 var FOLDER_ID = '1JKUqS-loYgZjvJULYY4xQmGnoIuVMrNt';
 var LOG_SPREADSHEET_ID = '1Iw4_A5SnVXxgxkTVrVkkcUWGOMyqMo0cSflhEvnumkw';
 var LOG_HEADERS = ['Timestamp', 'User_Email', 'File_Type', 'File_Name', 'Sheet_URL', 'Outputs', 'Hotel_Names'];
@@ -186,7 +186,8 @@ function getHistory(options) {
 
     var row = {
       timestamp: timestamp.getTime(),
-      display: Utilities.formatDate(timestamp, timeZone, 'dd MMM yyyy, HH:mm'),
+      date: Utilities.formatDate(timestamp, timeZone, 'dd MMM yyyy'),
+      time: Utilities.formatDate(timestamp, timeZone, 'HH:mm'),
       email: String(value[1] || ''),
       fileType: normalizeFileType_(value[2]),
       fileName: String(value[3] || ''),

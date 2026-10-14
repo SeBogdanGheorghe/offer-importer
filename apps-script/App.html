@@ -419,17 +419,19 @@ async function refreshHistory() {
 
 function renderHistoryRow(row) {
   const pillClass = row.fileType === "3PP form" ? "pill-3pp" : "pill-update";
-  const link = row.url
-    ? `<a class="link-open" href="${escapeAttribute(row.url)}" target="_blank" rel="noopener">Open &#8599;</a>`
-    : "—";
+  const fileName = row.url
+    ? `<a class="link-open" href="${escapeAttribute(row.url)}" target="_blank" rel="noopener">${escapeHtml(row.fileName)} &#8599;</a>`
+    : escapeHtml(row.fileName);
 
   return `<tr>
-    <td>${escapeHtml(row.display)}</td>
+    <td class="when-cell">
+      <span class="when-date">${escapeHtml(row.date)}</span>
+      <span class="when-time">${escapeHtml(row.time)}</span>
+    </td>
     <td>${escapeHtml(row.email)}</td>
     <td><span class="pill ${pillClass}">${escapeHtml(row.fileType)}</span></td>
-    <td class="file-cell">${escapeHtml(row.fileName)}</td>
+    <td class="file-cell">${fileName}</td>
     <td class="hotel-cell">${escapeHtml(row.hotelNames) || "&mdash;"}</td>
-    <td>${link}</td>
   </tr>`;
 }
 
