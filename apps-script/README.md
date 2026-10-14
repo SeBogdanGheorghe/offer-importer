@@ -1,6 +1,6 @@
 # Offer Importer — Apps Script edition
 
-Version `2.04.14.10.2026`
+Version `2.05.14.10.2026`
 
 The GitHub Pages Offer Importer, rebuilt as a Google Apps Script web app with an
 added **History** tab. Excel parsing and output generation are byte-for-byte the
@@ -20,7 +20,7 @@ repo with only the ES module import/export lines removed.
 | `Styles.html` | CSS (the public tool's stylesheet + tab/history rules) |
 | `Importer.html` | `src/importer.js`, unmodified apart from module syntax |
 | `App.html` | Client logic — upload, downloads, archiving, history UI |
-| `selfcheck.js` | `node selfcheck.cjs` — checks search, EF detection, date ranges. Not pushed (`.claspignore`) |
+| `selfcheck.js` | `node selfcheck.cjs` — checks search, 3PP detection, date ranges. Not pushed (`.claspignore`) |
 
 ## What happens on upload
 
@@ -34,8 +34,10 @@ repo with only the ES module import/export lines removed.
 
 ## File type
 
-`EF` when the workbook has **both** an `Offer Analysis` and an `Offer Details`
-tab. Everything else is logged as `update form`.
+`3PP form` when the workbook has **both** an `Offer Analysis` and an
+`Offer Details` tab. Everything else is logged as `update form`. Rows written
+before the rename still say `EF` in the spreadsheet; they are shown and
+filtered as `3PP form`.
 
 ## History
 

@@ -16,3 +16,4 @@
 - 1.04.04.09.2026 Made the Google Sheet link import always visible and renamed it from Experimental.
 - 1.05.04.09.2026 Matched the Google sheet link import heading size to Workbook Inputs.
 - 1.06.14.10.2026 Site now redirects to the Apps Script version with History; old tool kept at `standalone.html`.
+- 1.07.14.10.2026 Apps Script: renamed the `EF` file type to `3PP form`; older rows read back under the new name.

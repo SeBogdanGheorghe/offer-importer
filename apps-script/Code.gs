@@ -6,10 +6,12 @@
  * Google Sheet and records a History row.
  */
 
-var VERSION = '2.04.14.10.2026';
+var VERSION = '2.05.14.10.2026';
 var FOLDER_ID = '1JKUqS-loYgZjvJULYY4xQmGnoIuVMrNt';
 var LOG_SPREADSHEET_ID = '1Iw4_A5SnVXxgxkTVrVkkcUWGOMyqMo0cSflhEvnumkw';
 var LOG_HEADERS = ['Timestamp', 'User_Email', 'File_Type', 'File_Name', 'Sheet_URL', 'Outputs'];
+var FILE_TYPE_3PP = '3PP form';
+var FILE_TYPE_UPDATE = 'update form';
 /** Only these people can reveal the raw log spreadsheet link. */
 var LOG_VIEWERS = ['b.gheorghe@secretescapes.com'];
 var MAX_UPLOAD_BASE64 = 25 * 1024 * 1024;
@@ -92,7 +94,7 @@ function logUpload(payload) {
   return { fileType: fileType, url: url, fileName: fileName };
 }
 
-/** EF = the workbook carries both Offer Analysis and Offer Details tabs. */
+/** 3PP form = the workbook carries both Offer Analysis and Offer Details tabs. */
 function detectFileType_(sheetNames) {
   var names = (sheetNames || []).map(function (name) {
     return String(name || '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -101,7 +103,13 @@ function detectFileType_(sheetNames) {
   var hasAnalysis = names.some(function (name) { return name.indexOf('offer analysis') !== -1; });
   var hasDetails = names.some(function (name) { return name.indexOf('offer details') !== -1; });
 
-  return (hasAnalysis && hasDetails) ? 'EF' : 'update form';
+  return (hasAnalysis && hasDetails) ? FILE_TYPE_3PP : FILE_TYPE_UPDATE;
+}
+
+/** Rows logged before the rename still read 'EF'. Show them as 3PP form. */
+function normalizeFileType_(value) {
+  var text = String(value || '').trim();
+  return text.toUpperCase() === 'EF' ? FILE_TYPE_3PP : text;
 }
 
 function stripExtension_(fileName) {
@@ -133,7 +141,7 @@ function appendLogRow_(row) {
 
 /**
  * options: { mode: 'days'|'custom', days: 7|14|30, from: 'YYYY-MM-DD',
- *            to: 'YYYY-MM-DD', search: '', type: 'all'|'EF'|'update form' }
+ *            to: 'YYYY-MM-DD', search: '', type: 'all'|'3PP form'|'update form' }
  */
 function getHistory(options) {
   options = options || {};
@@ -160,7 +168,7 @@ function getHistory(options) {
       timestamp: timestamp.getTime(),
       display: Utilities.formatDate(timestamp, timeZone, 'dd MMM yyyy, HH:mm'),
       email: String(value[1] || ''),
-      fileType: String(value[2] || ''),
+      fileType: normalizeFileType_(value[2]),
       fileName: String(value[3] || ''),
       url: String(value[4] || ''),
       outputs: value[5]

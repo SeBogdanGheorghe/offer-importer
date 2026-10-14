@@ -9,15 +9,22 @@ function check(label, actual, expected) {
   else console.log(`ok   ${label}`);
 }
 
-/* --- EF vs update form ------------------------------------------------- */
-check('EF detected from Offer Analysis + Offer Details',
-  detectFileType_(['Offer Analysis', 'Offer Details', 'Rates (1) INAO', 'Allocation (1)']), 'EF');
+/* --- 3PP form vs update form -------------------------------------------- */
+check('3PP form detected from Offer Analysis + Offer Details',
+  detectFileType_(['Offer Analysis', 'Offer Details', 'Rates (1) INAO', 'Allocation (1)']), '3PP form');
 check('update form when only rates/allocation tabs',
   detectFileType_(['Rates (1)', 'Allocation (1)']), 'update form');
 check('update form when only Offer Details present',
   detectFileType_(['Offer Details', 'Rates (1)']), 'update form');
-check('EF detection is case/space tolerant',
-  detectFileType_(['  offer   analysis ', 'OFFER DETAILS']), 'EF');
+check('3PP detection is case/space tolerant',
+  detectFileType_(['  offer   analysis ', 'OFFER DETAILS']), '3PP form');
+
+/* rows logged before the rename must not disappear from the filter */
+check('legacy "EF" rows read back as 3PP form', normalizeFileType_('EF'), '3PP form');
+check('legacy value is matched case-insensitively', normalizeFileType_('ef'), '3PP form');
+check('update form rows are left alone', normalizeFileType_('update form'), 'update form');
+check('already-renamed rows are left alone', normalizeFileType_('3PP form'), '3PP form');
+check('a blank type stays blank', normalizeFileType_(''), '');
 
 /* --- search ------------------------------------------------------------ */
 const target = { fileName: 'RATE UPDATE_Amsterdam & Berlin with European Sleeper 13.10.2026',
